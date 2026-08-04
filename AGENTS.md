@@ -54,3 +54,5 @@ D:\Dev\Android\AndroidStudio\Start-Android-Studio-D.cmd
 - 新开 PowerShell 或 Codex 线程后，用户级环境变量才会天然生效；当前会话如找不到命令，先临时设置 `JAVA_HOME`、`ANDROID_HOME`、`ANDROID_SDK_ROOT` 和 `Path`。
 - 每次版本更新或输出新的 `DabaweiFlashNote` APK 前，必须先备份核心代码，不再备份 APK；当前由 `DabaweiFlashNote\tools\backup-core-code.py` 和 `tools\build-apk.ps1` 自动执行，备份输出到 `DabaweiFlashNote\90-版本代码备份\`，命名为 `DabaweiFlashNote-版本号-日期.zip`。
 - `tools\build-apk.ps1` 生成 `BuildInfo.java` 时必须使用无 BOM UTF-8；Windows PowerShell 的 `Set-Content -Encoding UTF8` 可能写入 BOM，导致 `javac` 报 `非法字符: '\ufeff'`。
+- Windows 下新增提醒类较多时，d8 可能触发“命令行过长”；`tools\build-apk.ps1` 已固定使用无 BOM UTF-8 参数文件调用 d8，不要改回逐个展开 class 文件路径。
+- 待办提醒数据库使用普通应用存储，`ReminderReceiver` 不声明 direct boot；提醒恢复依赖开机、系统时间和时区广播，修改提醒权限或通知权限时必须保留设置入口与非精确调度降级。

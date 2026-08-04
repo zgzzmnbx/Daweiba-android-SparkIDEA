@@ -19,7 +19,17 @@ public final class WebDavMarkdownSync {
         return sync(notes, settings);
     }
 
+    public Result sync(FlashNote note, SyncSettings settings, FlashNoteDatabase database) {
+        ArrayList<FlashNote> notes = new ArrayList<>();
+        notes.add(note);
+        return sync(notes, settings, database);
+    }
+
     public Result sync(List<FlashNote> notes, SyncSettings settings) {
+        return sync(notes, settings, null);
+    }
+
+    public Result sync(List<FlashNote> notes, SyncSettings settings, FlashNoteDatabase database) {
         if (!settings.isReady()) {
             return Result.skipped("WebDAV sync is not configured.");
         }
@@ -41,11 +51,24 @@ public final class WebDavMarkdownSync {
             String markdown = readUtf8(getConnection.getInputStream());
             ArrayList<String> lines = new ArrayList<>();
             for (FlashNote note : notes) {
+                ReminderRecord localReminder = database == null
+                        ? null
+                        : database.getReminderForLocalNote(note.getId());
                 lines.add(MarkdownAnchorInserter.formatNoteLine(
                         note.getContent(),
                         note.getCreatedAtMillis(),
                         TimeZone.getDefault(),
-                        note.getNoteType()));
+                        note.getNoteType(),
+                        note.getNoteType() == FlashNote.TYPE_TODO
+                                ? ReminderIds.localTaskId(note.getId())
+                                : "",
+                        localReminder == null ? "" : localReminder.getDueAtText(),
+                        localReminder == null
+                                || ReminderRecord.STATUS_CANCELLED.equals(localReminder.getStatus())
+                                ? ""
+                                : localReminder.getRemindAtText().length() > 0
+                                ? localReminder.getRemindAtText()
+                                : TodoDateTime.format(localReminder.getRemindAt())));
             }
             MarkdownAnchorInserter.Result inserted = MarkdownAnchorInserter.insertLinesBelowAnchor(
                     markdown,

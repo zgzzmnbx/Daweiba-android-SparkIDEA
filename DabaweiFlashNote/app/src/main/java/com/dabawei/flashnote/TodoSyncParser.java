@@ -57,20 +57,30 @@ public final class TodoSyncParser {
     private static final class Builder {
         private String text = "";
         private boolean done;
+        private String taskId = "";
         private String sourcePath = "";
         private int lineNumber;
         private String blockId = "";
         private String note = "";
+        private String dueAtText = "";
+        private String remindAtText = "";
 
         static Builder fromTaskLine(String line) {
             Builder builder = new Builder();
             builder.done = line.startsWith("- [x] ") || line.startsWith("- [X] ");
             builder.text = line.substring(6).trim();
+            builder.dueAtText = parseInlineDue(builder.text);
             return builder;
         }
 
         void readMetadata(String line) {
-            if (line.startsWith("来源文件::")) {
+            if (line.startsWith("任务ID::")) {
+                taskId = afterDoubleColon(line);
+            } else if (line.startsWith("截止日期::")) {
+                dueAtText = afterDoubleColon(line);
+            } else if (line.startsWith("提醒时间::")) {
+                remindAtText = afterDoubleColon(line);
+            } else if (line.startsWith("来源文件::")) {
                 sourcePath = afterDoubleColon(line);
             } else if (line.startsWith("行号::")) {
                 lineNumber = parseInt(afterDoubleColon(line));
@@ -82,7 +92,21 @@ public final class TodoSyncParser {
         }
 
         TodoSyncItem build() {
-            return new TodoSyncItem(text, done, sourcePath, lineNumber, blockId, note);
+            String stableTaskId = taskId.length() > 0
+                    ? taskId
+                    : (blockId.length() > 0
+                    ? blockId
+                    : ReminderIds.generatedTaskId(sourcePath, lineNumber, text));
+            return new TodoSyncItem(
+                    text,
+                    done,
+                    stableTaskId,
+                    sourcePath,
+                    lineNumber,
+                    blockId,
+                    note,
+                    dueAtText,
+                    remindAtText);
         }
 
         private static String afterDoubleColon(String line) {
@@ -96,6 +120,25 @@ public final class TodoSyncParser {
             } catch (Exception e) {
                 return 0;
             }
+        }
+
+        private static String parseInlineDue(String text) {
+            String safeText = text == null ? "" : text;
+            String[] markers = new String[]{"📅", "due::"};
+            for (String marker : markers) {
+                int markerIndex = safeText.indexOf(marker);
+                if (markerIndex < 0) {
+                    continue;
+                }
+                String candidate = safeText.substring(markerIndex + marker.length()).trim();
+                if (candidate.length() >= 10) {
+                    candidate = candidate.substring(0, 10);
+                    if (candidate.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                        return candidate;
+                    }
+                }
+            }
+            return "";
         }
     }
 }

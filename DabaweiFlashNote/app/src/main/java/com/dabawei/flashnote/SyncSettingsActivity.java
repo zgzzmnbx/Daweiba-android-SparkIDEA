@@ -1,9 +1,13 @@
 package com.dabawei.flashnote;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.os.Build;
+import android.provider.Settings;
+import android.net.Uri;
 import android.content.pm.PackageInfo;
 import android.view.View;
 import android.view.ViewGroup;
@@ -56,6 +60,8 @@ public final class SyncSettingsActivity extends Activity {
         claudeFontStyle = findViewById(R.id.claudeFontStyle);
         themeSpinner = findViewById(R.id.themeSpinner);
         exportButton = findViewById(R.id.exportButton);
+        Button reminderNotificationSettings = findViewById(R.id.reminderNotificationSettingsButton);
+        Button reminderExactSettings = findViewById(R.id.reminderExactSettingsButton);
         TextView versionInfo = findViewById(R.id.versionInfo);
         Button save = findViewById(R.id.saveSyncSettingsButton);
 
@@ -73,6 +79,36 @@ public final class SyncSettingsActivity extends Activity {
         bindThemeSpinner();
         bindVersionInfo(versionInfo);
         applyFontStyle(claudeFontStyle.isChecked());
+
+        reminderNotificationSettings.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try {
+                    Intent intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                            .putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName());
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Toast.makeText(SyncSettingsActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        reminderExactSettings.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (Build.VERSION.SDK_INT < 31) {
+                    Toast.makeText(SyncSettingsActivity.this, R.string.reminder_exact_settings, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                try {
+                    startActivity(new Intent(
+                            Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                            Uri.parse("package:" + getPackageName())));
+                } catch (Exception e) {
+                    Toast.makeText(SyncSettingsActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
 
         claudeFontStyle.setOnClickListener(new View.OnClickListener() {
             @Override

@@ -3,6 +3,8 @@ package com.dabawei.flashnote;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -19,6 +21,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.InputType;
@@ -28,12 +31,14 @@ import android.webkit.MimeTypeMap;
 import android.content.Context;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -45,6 +50,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -96,11 +102,14 @@ public class MainActivity extends Activity {
     private Button recordButton;
     private ThemePalette currentTheme;
     private TodoAdapter todoAdapter;
+    private ReminderScheduler reminderScheduler;
     private boolean claudeFontEnabled;
     private int currentPage = PAGE_HOME;
     private boolean todoSyncing;
     private boolean pendingBatchSyncAfterPermission;
     private FlashNote pendingSingleSyncAfterPermission;
+    private String highlightedTaskId;
+    private boolean exactAlarmPromptAfterNotification;
     private float pullStartY;
     private boolean isPulling;
 
@@ -113,6 +122,7 @@ public class MainActivity extends Activity {
     private static final String PENDING_IMAGE_DIR = "pending-images";
     private static final int REQUEST_PICK_IMAGE = 1001;
     private static final int REQUEST_READ_IMAGES_PERMISSION = 1002;
+    private static final int REQUEST_POST_NOTIFICATIONS = 1003;
     private static final float PULL_TRIGGER_DP = 112f;
     private static final float PULL_MAX_DP = 142f;
     private static final Pattern PENDING_IMAGE_PATTERN = Pattern.compile("!\\[待上传图片\\]\\(((?:content|file):[^)]+)\\)");
@@ -123,6 +133,8 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         database = new FlashNoteDatabase(this);
+        reminderScheduler = new ReminderScheduler(this, database);
+        reminderScheduler.rescheduleAll();
         pullRoot = findViewById(R.id.pullRoot);
         rootLayout = findViewById(R.id.rootLayout);
         pullIndicator = findViewById(R.id.pullIndicator);
@@ -256,6 +268,7 @@ public class MainActivity extends Activity {
         refreshNotes();
         focusInput();
         handleIncomingShare(getIntent());
+        handleReminderIntent(getIntent());
     }
 
     @Override
@@ -267,6 +280,9 @@ public class MainActivity extends Activity {
             claudeFontEnabled = prefs.getBoolean(PREF_CLAUDE_FONT_KEY, false);
             applyTheme(currentTheme);
             refreshNotes();
+            if (reminderScheduler != null) {
+                reminderScheduler.rescheduleAll();
+            }
         }
     }
 
@@ -275,6 +291,7 @@ public class MainActivity extends Activity {
         super.onNewIntent(intent);
         setIntent(intent);
         handleIncomingShare(intent);
+        handleReminderIntent(intent);
     }
 
     private void saveCurrentNote() {
@@ -293,11 +310,30 @@ public class MainActivity extends Activity {
         }
 
         long createdAt = System.currentTimeMillis();
-        database.insertNote(content, createdAt, noteType);
+        long noteId = database.insertNote(content, createdAt, noteType);
         noteInput.setText("");
         refreshNotes();
         FlashNoteWidgetProvider.refresh(this);
         focusInput();
+        if (noteType == FlashNote.TYPE_TODO) {
+            final FlashNote savedTodo = new FlashNote(
+                    noteId,
+                    content,
+                    createdAt,
+                    FlashNoteDatabase.SYNC_PENDING,
+                    FlashNote.TYPE_TODO);
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.todo_badge)
+                    .setMessage(R.string.reminder_add)
+                    .setNegativeButton(R.string.cancel, null)
+                    .setPositiveButton(R.string.reminder_add, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            showReminderPicker(ReminderTarget.forLocalNote(savedTodo));
+                        }
+                    })
+                    .show();
+        }
     }
 
     private void syncTodoItems() {
@@ -319,10 +355,19 @@ public class MainActivity extends Activity {
                     public void run() {
                         todoSyncing = false;
                         if (result.isSuccess()) {
+                            ReminderReconciler.Summary reminderSummary = ReminderReconciler.reconcile(
+                                    database,
+                                    result.getItems(),
+                                    System.currentTimeMillis(),
+                                    reminderScheduler);
                             showTodoItems(result.getItems());
+                            String successMessage = getString(R.string.todo_sync_success, result.getItems().size());
+                            if (reminderSummary.getOverdueCount() > 0) {
+                                successMessage += "；" + getString(R.string.reminder_overdue);
+                            }
                             Toast.makeText(
                                     MainActivity.this,
-                                    getString(R.string.todo_sync_success, result.getItems().size()),
+                                    successMessage,
                                     Toast.LENGTH_LONG).show();
                         } else {
                             Toast.makeText(
@@ -342,6 +387,221 @@ public class MainActivity extends Activity {
         todoList.setVisibility(hasItems ? View.VISIBLE : View.GONE);
         todoEmptyTitle.setVisibility(hasItems ? View.GONE : View.VISIBLE);
         todoEmptyMessage.setVisibility(hasItems ? View.GONE : View.VISIBLE);
+        if (highlightedTaskId != null && highlightedTaskId.length() > 0) {
+            final int position = todoAdapter.findPositionByTaskId(highlightedTaskId);
+            if (position >= 0) {
+                todoList.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        todoList.setSelection(position);
+                    }
+                });
+            }
+            highlightedTaskId = null;
+        }
+    }
+
+    private void handleReminderIntent(Intent intent) {
+        if (intent == null || !intent.getBooleanExtra(ReminderScheduler.EXTRA_OPEN_TODO, false)) {
+            return;
+        }
+        highlightedTaskId = intent.getStringExtra(ReminderScheduler.EXTRA_TASK_ID);
+        switchPage(PAGE_TODO);
+    }
+
+    private void showReminderPicker(final ReminderTarget target) {
+        if (target == null || target.taskId.length() == 0) {
+            return;
+        }
+        target.existingReminder = database.getReminderByTaskId(target.taskId);
+        final ArrayList<String> labels = new ArrayList<>();
+        final ArrayList<Integer> actions = new ArrayList<>();
+        labels.add(getString(R.string.reminder_one_hour));
+        actions.add(ReminderAction.ONE_HOUR);
+        long now = System.currentTimeMillis();
+        long todayAtSix = ReminderTimeCalculator.todayAt(now, 18, 0);
+        if (todayAtSix > 0L) {
+            labels.add(getString(R.string.reminder_today_18));
+            actions.add(ReminderAction.TODAY_AT_SIX);
+        }
+        labels.add(getString(R.string.reminder_tomorrow_9));
+        actions.add(ReminderAction.TOMORROW_AT_NINE);
+        labels.add(getString(R.string.reminder_custom));
+        actions.add(ReminderAction.CUSTOM);
+        labels.add(getString(R.string.reminder_cancel));
+        actions.add(ReminderAction.CANCEL);
+
+        new AlertDialog.Builder(this)
+                .setTitle(target.existingReminder == null
+                        ? R.string.reminder_add
+                        : R.string.reminder_edit)
+                .setItems(labels.toArray(new String[0]), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        int action = actions.get(which);
+                        if (action == ReminderAction.ONE_HOUR) {
+                            saveReminder(target, ReminderTimeCalculator.oneHourAfter(System.currentTimeMillis()));
+                        } else if (action == ReminderAction.TODAY_AT_SIX) {
+                            saveReminder(target, ReminderTimeCalculator.todayAt(System.currentTimeMillis(), 18, 0));
+                        } else if (action == ReminderAction.TOMORROW_AT_NINE) {
+                            saveReminder(target, ReminderTimeCalculator.tomorrowAt(System.currentTimeMillis(), 9, 0));
+                        } else if (action == ReminderAction.CUSTOM) {
+                            showCustomReminderPicker(target);
+                        } else {
+                            cancelReminder(target);
+                        }
+                    }
+                })
+                .show();
+    }
+
+    private void showCustomReminderPicker(final ReminderTarget target) {
+        final Calendar initial = Calendar.getInstance();
+        if (target.existingReminder != null && target.existingReminder.getRemindAt() > System.currentTimeMillis()) {
+            initial.setTimeInMillis(target.existingReminder.getRemindAt());
+        } else {
+            initial.add(Calendar.HOUR_OF_DAY, 1);
+        }
+        DatePickerDialog dateDialog = new DatePickerDialog(
+                this,
+                new DatePickerDialog.OnDateSetListener() {
+                    @Override
+                    public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                        final Calendar selected = Calendar.getInstance();
+                        selected.set(year, month, dayOfMonth, initial.get(Calendar.HOUR_OF_DAY), initial.get(Calendar.MINUTE), 0);
+                        selected.set(Calendar.MILLISECOND, 0);
+                        new TimePickerDialog(
+                                MainActivity.this,
+                                new TimePickerDialog.OnTimeSetListener() {
+                                    @Override
+                                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                                        selected.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                                        selected.set(Calendar.MINUTE, minute);
+                                        saveReminder(target, selected.getTimeInMillis());
+                                    }
+                                },
+                                selected.get(Calendar.HOUR_OF_DAY),
+                                selected.get(Calendar.MINUTE),
+                                true)
+                                .show();
+                    }
+                },
+                initial.get(Calendar.YEAR),
+                initial.get(Calendar.MONTH),
+                initial.get(Calendar.DAY_OF_MONTH));
+        dateDialog.show();
+    }
+
+    private void saveReminder(ReminderTarget target, long remindAt) {
+        long now = System.currentTimeMillis();
+        if (remindAt <= now) {
+            Toast.makeText(this, R.string.reminder_overdue, Toast.LENGTH_LONG).show();
+            return;
+        }
+        ReminderRecord existing = database.getReminderByTaskId(target.taskId);
+        int notificationId = existing == null
+                ? ReminderIds.notificationIdForTaskId(target.taskId)
+                : existing.getNotificationId();
+        ReminderRecord record = new ReminderRecord(
+                existing == null ? 0L : existing.getReminderId(),
+                target.taskId,
+                target.localNoteId,
+                target.taskText,
+                target.sourcePath,
+                target.sourceBlockId,
+                target.dueAt,
+                remindAt,
+                0L,
+                ReminderRecord.STATUS_SCHEDULED,
+                notificationId,
+                now,
+                target.dueAtText,
+                TodoDateTime.format(remindAt),
+                existing == null ? target.remoteRemindAtText : existing.getRemoteRemindAtText(),
+                java.util.TimeZone.getDefault().getID());
+        database.upsertReminder(record);
+        ReminderScheduler.ScheduleResult scheduleResult = reminderScheduler.schedule(record);
+        requestReminderPermissions();
+        if (!scheduleResult.isScheduled()) {
+            Toast.makeText(this, R.string.reminder_system_delay, Toast.LENGTH_LONG).show();
+        } else if (scheduleResult.isExact()) {
+            Toast.makeText(this, getString(R.string.reminder_saved, TodoDateTime.format(remindAt)), Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(this, R.string.reminder_system_delay, Toast.LENGTH_LONG).show();
+        }
+        refreshNotes();
+        todoAdapter.notifyDataSetChanged();
+    }
+
+    private void cancelReminder(ReminderTarget target) {
+        ReminderRecord existing = database.getReminderByTaskId(target.taskId);
+        if (existing == null) {
+            return;
+        }
+        reminderScheduler.cancel(existing);
+        database.upsertReminder(existing.withStatus(
+                ReminderRecord.STATUS_CANCELLED,
+                0L).withLastSyncedAt(System.currentTimeMillis()));
+        Toast.makeText(this, R.string.reminder_cancelled, Toast.LENGTH_SHORT).show();
+        refreshNotes();
+        todoAdapter.notifyDataSetChanged();
+    }
+
+    private void requestReminderPermissions() {
+        if (Build.VERSION.SDK_INT >= 33
+                && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            boolean explained = getPreferences(MODE_PRIVATE).getBoolean("reminder_notification_explained", false);
+            if (!explained) {
+                getPreferences(MODE_PRIVATE).edit().putBoolean("reminder_notification_explained", true).apply();
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.reminder_add)
+                        .setMessage(R.string.reminder_notification_permission_explain)
+                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                promptExactAlarmPermissionIfNeeded();
+                            }
+                        })
+                        .setPositiveButton(R.string.reminder_open_settings, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                exactAlarmPromptAfterNotification = true;
+                                requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_POST_NOTIFICATIONS);
+                            }
+                        })
+                        .show();
+                return;
+            }
+        }
+        promptExactAlarmPermissionIfNeeded();
+    }
+
+    private void promptExactAlarmPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT < 31 || ReminderScheduler.isExactAlarmAllowed(this)) {
+            return;
+        }
+        boolean explained = getPreferences(MODE_PRIVATE).getBoolean("reminder_exact_explained", false);
+        if (explained) {
+            return;
+        }
+        getPreferences(MODE_PRIVATE).edit().putBoolean("reminder_exact_explained", true).apply();
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.reminder_add)
+                .setMessage(R.string.reminder_exact_permission_explain)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.reminder_open_settings, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        try {
+                            startActivity(new Intent(
+                                    Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                                    Uri.parse("package:" + getPackageName())));
+                        } catch (Exception ignored) {
+                            // The fallback non-exact alarm remains active.
+                        }
+                    }
+                })
+                .show();
     }
 
     private void refreshNotes() {
@@ -787,6 +1047,16 @@ public class MainActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_POST_NOTIFICATIONS) {
+            if (grantResults.length == 0 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, R.string.reminder_system_delay, Toast.LENGTH_LONG).show();
+            }
+            if (exactAlarmPromptAfterNotification) {
+                exactAlarmPromptAfterNotification = false;
+                promptExactAlarmPermissionIfNeeded();
+            }
+            return;
+        }
         if (requestCode != REQUEST_READ_IMAGES_PERMISSION) {
             return;
         }
@@ -943,7 +1213,7 @@ public class MainActivity extends Activity {
             public void run() {
                 final PreparedNotes prepared = prepareImagesForSync(pending, settings);
                 final WebDavMarkdownSync.Result result = prepared.isReady()
-                        ? new WebDavMarkdownSync().sync(prepared.getNotes(), settings)
+                        ? new WebDavMarkdownSync().sync(prepared.getNotes(), settings, database)
                         : WebDavMarkdownSync.Result.failed(prepared.getErrorMessage());
                 if (result.isSynced()) {
                     database.markSyncState(prepared.getNotes(), FlashNoteDatabase.SYNC_SYNCED);
@@ -1101,24 +1371,29 @@ public class MainActivity extends Activity {
         final String toggleLabel = note.getNoteType() == FlashNote.TYPE_TODO
                 ? getString(R.string.convert_to_note)
                 : getString(R.string.convert_to_todo);
-        String[] actions = new String[]{
-                getString(R.string.edit_note),
-                getString(R.string.resync_note),
-                toggleLabel,
-                getString(R.string.delete_note)
-        };
+        final boolean isTodo = note.getNoteType() == FlashNote.TYPE_TODO;
+        ArrayList<String> actionList = new ArrayList<>();
+        actionList.add(getString(R.string.edit_note));
+        actionList.add(getString(R.string.resync_note));
+        if (isTodo) {
+            actionList.add(getString(R.string.reminder_edit));
+        }
+        actionList.add(toggleLabel);
+        actionList.add(getString(R.string.delete_note));
         new AlertDialog.Builder(this)
                 .setTitle(R.string.note_actions_title)
-                .setItems(actions, new DialogInterface.OnClickListener() {
+                .setItems(actionList.toArray(new String[0]), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if (which == 0) {
                             showEditNoteDialog(note);
                         } else if (which == 1) {
                             resyncSingleNote(note);
-                        } else if (which == 2) {
+                        } else if (isTodo && which == 2) {
+                            showReminderPicker(ReminderTarget.forLocalNote(note));
+                        } else if (which == (isTodo ? 3 : 2)) {
                             toggleNoteType(note);
-                        } else if (which == 3) {
+                        } else if (which == (isTodo ? 4 : 3)) {
                             confirmDelete(note);
                         }
                     }
@@ -1163,6 +1438,9 @@ public class MainActivity extends Activity {
 
     private void toggleNoteType(FlashNote note) {
         int nextType = note.getNoteType() == FlashNote.TYPE_TODO ? FlashNote.TYPE_NOTE : FlashNote.TYPE_TODO;
+        if (nextType != FlashNote.TYPE_TODO) {
+            cancelReminder(ReminderTarget.forLocalNote(note));
+        }
         database.updateNoteType(note.getId(), nextType);
         refreshNotes();
         FlashNoteWidgetProvider.refresh(this);
@@ -1177,6 +1455,9 @@ public class MainActivity extends Activity {
                 .setPositiveButton(R.string.delete_note, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        if (note.getNoteType() == FlashNote.TYPE_TODO) {
+                            cancelReminder(ReminderTarget.forLocalNote(note));
+                        }
                         database.deleteNote(note.getId());
                         refreshNotes();
                         FlashNoteWidgetProvider.refresh(MainActivity.this);
@@ -1199,7 +1480,7 @@ public class MainActivity extends Activity {
             public void run() {
                 final PreparedNotes prepared = prepareImagesForSync(Collections.singletonList(note), settings);
                 final WebDavMarkdownSync.Result result = prepared.isReady()
-                        ? new WebDavMarkdownSync().sync(prepared.getNotes(), settings)
+                        ? new WebDavMarkdownSync().sync(prepared.getNotes(), settings, database)
                         : WebDavMarkdownSync.Result.failed(prepared.getErrorMessage());
                 if (result.isSynced()) {
                     database.markSyncState(note.getId(), FlashNoteDatabase.SYNC_SYNCED);
@@ -1308,6 +1589,76 @@ public class MainActivity extends Activity {
         }
     }
 
+    private static final class ReminderAction {
+        static final int ONE_HOUR = 1;
+        static final int TODAY_AT_SIX = 2;
+        static final int TOMORROW_AT_NINE = 3;
+        static final int CUSTOM = 4;
+        static final int CANCEL = 5;
+
+        private ReminderAction() {
+        }
+    }
+
+    private static final class ReminderTarget {
+        private final String taskId;
+        private final long localNoteId;
+        private final String taskText;
+        private final String sourcePath;
+        private final String sourceBlockId;
+        private final long dueAt;
+        private final String dueAtText;
+        private final String remoteRemindAtText;
+        private ReminderRecord existingReminder;
+
+        private ReminderTarget(
+                String taskId,
+                long localNoteId,
+                String taskText,
+                String sourcePath,
+                String sourceBlockId,
+                long dueAt,
+                String dueAtText,
+                String remoteRemindAtText) {
+            this.taskId = taskId == null ? "" : taskId;
+            this.localNoteId = localNoteId;
+            this.taskText = taskText == null ? "" : taskText;
+            this.sourcePath = sourcePath == null ? "" : sourcePath;
+            this.sourceBlockId = sourceBlockId == null ? "" : sourceBlockId;
+            this.dueAt = dueAt;
+            this.dueAtText = dueAtText == null ? "" : dueAtText;
+            this.remoteRemindAtText = remoteRemindAtText == null ? "" : remoteRemindAtText;
+        }
+
+        static ReminderTarget forLocalNote(FlashNote note) {
+            return new ReminderTarget(
+                    ReminderIds.localTaskId(note.getId()),
+                    note.getId(),
+                    note.getContent(),
+                    "手机端待办",
+                    "",
+                    0L,
+                    "",
+                    "");
+        }
+
+        static ReminderTarget forRemoteTodo(TodoSyncItem item) {
+            String taskId = item.getTaskId();
+            if (taskId == null || taskId.length() == 0) {
+                taskId = ReminderIds.generatedTaskId(item.getSourcePath(), item.getLineNumber(), item.getText());
+            }
+            return new ReminderTarget(
+                    taskId,
+                    0L,
+                    item.getText(),
+                    item.getSourcePath(),
+                    item.getBlockId(),
+                    TodoDateTime.parseDue(item.getDueAtText()),
+                    item.getDueAtText(),
+                    item.getRemindAtText());
+        }
+    }
+
     private static final class ImageContentResult {
         private final String content;
         private final String errorMessage;
@@ -1397,6 +1748,7 @@ public class MainActivity extends Activity {
                 holder.time = row.findViewById(R.id.noteTime);
                 holder.syncBadge = row.findViewById(R.id.syncBadge);
                 holder.todoBadge = row.findViewById(R.id.todoBadge);
+                holder.reminderBadge = row.findViewById(R.id.reminderBadge);
                 holder.deleteButton = row.findViewById(R.id.deleteButton);
                 row.setTag(holder);
             } else {
@@ -1424,6 +1776,23 @@ public class MainActivity extends Activity {
             holder.syncBadge.setVisibility(note.getSyncState() == FlashNoteDatabase.SYNC_SYNCED ? View.VISIBLE : View.GONE);
             holder.syncBadge.setTextColor(Color.parseColor(theme.getAccentDarkColor()));
             holder.todoBadge.setVisibility(note.getNoteType() == FlashNote.TYPE_TODO ? View.VISIBLE : View.GONE);
+            ReminderRecord localReminder = note.getNoteType() == FlashNote.TYPE_TODO
+                    ? database.getReminderForLocalNote(note.getId())
+                    : null;
+            if (localReminder != null
+                    && (ReminderRecord.STATUS_SCHEDULED.equals(localReminder.getStatus())
+                    || ReminderRecord.STATUS_SNOOZED.equals(localReminder.getStatus()))) {
+                String remindText = localReminder.getRemindAtText().length() > 0
+                        ? localReminder.getRemindAtText()
+                        : TodoDateTime.format(localReminder.getRemindAt());
+                holder.reminderBadge.setText("🔔 " + remindText);
+                holder.reminderBadge.setVisibility(View.VISIBLE);
+            } else if (localReminder != null && ReminderRecord.STATUS_OVERDUE.equals(localReminder.getStatus())) {
+                holder.reminderBadge.setText("🔔 已过期");
+                holder.reminderBadge.setVisibility(View.VISIBLE);
+            } else {
+                holder.reminderBadge.setVisibility(View.GONE);
+            }
             if (android.os.Build.VERSION.SDK_INT >= 21) {
                 holder.deleteButton.setBackgroundTintList(null);
                 holder.deleteButton.setStateListAnimator(null);
@@ -1469,6 +1838,19 @@ public class MainActivity extends Activity {
                 rows.add(TodoRow.item(item));
             }
             notifyDataSetChanged();
+        }
+
+        int findPositionByTaskId(String taskId) {
+            if (taskId == null || taskId.length() == 0) {
+                return -1;
+            }
+            for (int index = 0; index < rows.size(); index++) {
+                TodoRow row = rows.get(index);
+                if (!row.isHeader() && taskId.equals(row.item.getTaskId())) {
+                    return index;
+                }
+            }
+            return -1;
         }
 
         void setTheme(ThemePalette nextTheme, boolean nextUseClaudeFont) {
@@ -1579,6 +1961,12 @@ public class MainActivity extends Activity {
                     ViewGroup.LayoutParams.WRAP_CONTENT);
             metaParams.topMargin = (int) dp(7);
             card.addView(meta, metaParams);
+            card.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    showReminderPicker(ReminderTarget.forRemoteTodo(item));
+                }
+            });
             return outer;
         }
 
@@ -1592,6 +1980,27 @@ public class MainActivity extends Activity {
                     builder.append("\n");
                 }
                 builder.append("备注：").append(item.getNote());
+            }
+            ReminderRecord reminder = database.getReminderByTaskId(item.getTaskId());
+            if (builder.length() > 0) {
+                builder.append("\n");
+            }
+            if (reminder != null && ReminderRecord.STATUS_OVERDUE.equals(reminder.getStatus())) {
+                builder.append("🔔 已过期");
+            } else if (reminder != null
+                    && (ReminderRecord.STATUS_SCHEDULED.equals(reminder.getStatus())
+                    || ReminderRecord.STATUS_SNOOZED.equals(reminder.getStatus()))) {
+                String remindText = reminder.getRemindAtText().length() > 0
+                        ? reminder.getRemindAtText()
+                        : TodoDateTime.format(reminder.getRemindAt());
+                if (ReminderRecord.STATUS_SNOOZED.equals(reminder.getStatus())) {
+                    remindText = "稍后 " + TodoDateTime.format(reminder.getSnoozeUntil());
+                }
+                builder.append("🔔 ").append(remindText);
+            } else if (item.getRemindAtText().length() > 0) {
+                builder.append("🔔 ").append(item.getRemindAtText());
+            } else {
+                builder.append("○ 未设置提醒");
             }
             return builder.length() == 0 ? "来自 Obsidian 待办同步" : builder.toString();
         }
@@ -1648,6 +2057,7 @@ public class MainActivity extends Activity {
         TextView time;
         TextView syncBadge;
         TextView todoBadge;
+        TextView reminderBadge;
         ImageButton deleteButton;
     }
 

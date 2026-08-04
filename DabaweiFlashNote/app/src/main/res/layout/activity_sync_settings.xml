@@ -60,6 +60,22 @@
             android:textSize="17sp"
             android:textStyle="bold" />
 
+        <Button
+            android:id="@+id/reminderNotificationSettingsButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
+            android:text="@string/reminder_notification_settings"
+            android:textSize="15sp" />
+
+        <Button
+            android:id="@+id/reminderExactSettingsButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="4dp"
+            android:text="@string/reminder_exact_settings"
+            android:textSize="15sp" />
+
         <CheckBox
             android:id="@+id/syncEnabled"
             android:layout_width="match_parent"

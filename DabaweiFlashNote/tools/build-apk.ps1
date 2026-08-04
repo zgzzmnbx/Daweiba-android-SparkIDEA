@@ -29,8 +29,8 @@ if (($env:Path -split ";") -notcontains $javaBin) {
   $env:Path = $javaBin + ";" + $env:Path
 }
 
-$versionCode = "47"
-$versionName = "0.47-legacy-media-permission"
+$versionCode = "48"
+$versionName = "0.48-todo-reminders"
 
 $backupScript = Join-Path $projectRoot "tools\backup-core-code.py"
 $python = Get-Command python -ErrorAction SilentlyContinue
@@ -117,7 +117,9 @@ if ($LASTEXITCODE -ne 0) { throw "javac failed" }
 $classFiles = Get-ChildItem -LiteralPath $classesDir -Filter "*.class" -Recurse | ForEach-Object { $_.FullName }
 if (-not $classFiles) { throw "No class files generated" }
 
-& $d8 --min-api 23 --lib $platform --output $dexDir @classFiles
+$d8ArgsFile = Join-Path $intermediatesDir "d8-classes.txt"
+[System.IO.File]::WriteAllLines($d8ArgsFile, $classFiles, [System.Text.UTF8Encoding]::new($false))
+& $d8 --min-api 23 --lib $platform --output $dexDir "@$d8ArgsFile"
 if ($LASTEXITCODE -ne 0) { throw "d8 failed" }
 
 Copy-Item -LiteralPath $unsignedApk -Destination $dexedApk -Force

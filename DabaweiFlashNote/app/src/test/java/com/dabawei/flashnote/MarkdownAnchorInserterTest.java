@@ -6,6 +6,7 @@ public final class MarkdownAnchorInserterTest {
         insertsMultipleLinesBelowAnchor();
         insertsMultipleBlocksWithBlankLine();
         formatsTodoLineForObsidianTasks();
+        formatsTodoReminderFields();
         formatsFlashNoteTagsAfterContent();
         preservesLineEndingsAroundAnchor();
         reportsMissingAnchor();
@@ -40,6 +41,20 @@ public final class MarkdownAnchorInserterTest {
         assertContains(line, "  记录日期:: 2026-06-06 21:55");
         assertContains(line, "  备注::");
         assertContains(line, "  ^flash-20260606-2155");
+    }
+
+    private static void formatsTodoReminderFields() {
+        String line = MarkdownAnchorInserter.formatNoteLine(
+                "带提醒的待办",
+                utcMillis(2026, 8, 4, 12, 0),
+                java.util.TimeZone.getTimeZone("UTC"),
+                FlashNote.TYPE_TODO,
+                "local-note-7",
+                "2026-08-06",
+                "2026-08-05 09:00");
+        assertContains(line, "任务ID:: local-note-7");
+        assertContains(line, "截止日期:: 2026-08-06");
+        assertContains(line, "提醒时间:: 2026-08-05 09:00");
     }
 
     private static void insertsMultipleLinesBelowAnchor() {

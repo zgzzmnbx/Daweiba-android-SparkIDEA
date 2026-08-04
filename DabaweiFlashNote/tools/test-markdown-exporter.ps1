@@ -23,6 +23,7 @@ $sourceFiles = @(
   (Join-Path $projectRoot "app\src\main\java\com\dabawei\flashnote\MarkdownAnchorInserter.java"),
   (Join-Path $projectRoot "app\src\main\java\com\dabawei\flashnote\ObsidianImageAsset.java"),
   (Join-Path $projectRoot "app\src\main\java\com\dabawei\flashnote\PullGestureAction.java"),
+  (Join-Path $projectRoot "app\src\main\java\com\dabawei\flashnote\ReminderIds.java"),
   (Join-Path $projectRoot "app\src\main\java\com\dabawei\flashnote\SyncPathDefaults.java"),
   (Join-Path $projectRoot "app\src\main\java\com\dabawei\flashnote\ThemePalette.java"),
   (Join-Path $projectRoot "app\src\main\java\com\dabawei\flashnote\TodoSyncItem.java"),

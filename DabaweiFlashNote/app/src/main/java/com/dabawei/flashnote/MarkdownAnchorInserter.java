@@ -80,6 +80,27 @@ public final class MarkdownAnchorInserter {
     }
 
     public static String formatNoteLine(String content, long createdAtMillis, TimeZone timeZone, int noteType) {
+        return formatNoteLine(content, createdAtMillis, timeZone, noteType, "", "");
+    }
+
+    public static String formatNoteLine(
+            String content,
+            long createdAtMillis,
+            TimeZone timeZone,
+            int noteType,
+            String taskId,
+            String remindAtText) {
+        return formatNoteLine(content, createdAtMillis, timeZone, noteType, taskId, "", remindAtText);
+    }
+
+    public static String formatNoteLine(
+            String content,
+            long createdAtMillis,
+            TimeZone timeZone,
+            int noteType,
+            String taskId,
+            String dueAtText,
+            String remindAtText) {
         TimeZone safeTimeZone = timeZone == null ? TimeZone.getDefault() : timeZone;
         SimpleDateFormat titleFormat = new SimpleDateFormat("yyyyMMddHHmm", Locale.US);
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US);
@@ -100,6 +121,17 @@ public final class MarkdownAnchorInserter {
             builder.append("- ").append(safeContent).append(" #闪念").append("\n");
         }
         builder.append("  记录日期:: ").append(dateText).append("\n");
+        if (noteType == FlashNote.TYPE_TODO && taskId != null && taskId.trim().length() > 0) {
+            builder.append("  任务ID:: ").append(taskId.trim()).append("\n");
+        }
+        if (noteType == FlashNote.TYPE_TODO) {
+            builder.append("  截止日期:: ")
+                    .append(dueAtText == null ? "" : dueAtText.trim())
+                    .append("\n");
+            builder.append("  提醒时间:: ")
+                    .append(remindAtText == null ? "" : remindAtText.trim())
+                    .append("\n");
+        }
         builder.append("  备注::").append("\n");
         builder.append("  ^flash-").append(blockText);
         return builder.toString();

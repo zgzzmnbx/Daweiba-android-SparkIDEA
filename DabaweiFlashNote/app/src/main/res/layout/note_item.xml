@@ -79,6 +79,21 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/reminderBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="26dp"
+                android:layout_marginLeft="8dp"
+                android:background="@drawable/synced_badge_background"
+                android:gravity="center"
+                android:maxWidth="130dp"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:textColor="#1C4E35"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <TextView
                 android:id="@+id/syncBadge"
                 android:layout_width="wrap_content"
                 android:layout_height="26dp"

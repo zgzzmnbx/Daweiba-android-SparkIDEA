@@ -3,6 +3,10 @@
     package="com.dabawei.flashnote">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
@@ -20,6 +24,17 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/flash_note_widget_info" />
+        </receiver>
+        <receiver
+            android:name=".ReminderReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="com.dabawei.flashnote.action.REMINDER_FIRE" />
+                <action android:name="com.dabawei.flashnote.action.REMINDER_SNOOZE" />
+            </intent-filter>
         </receiver>
         <activity
             android:name=".QuickCaptureActivity"
