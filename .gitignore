@@ -1,4 +1,5 @@
 # Local pure-Java test output; the Android build output remains versioned for this project.
 DabaweiFlashNote/build/test-classes/
 DabaweiFlashNote/build/test-classes-p0*/
+DabaweiFlashNote/build/test-classes-p1*/
 DabaweiFlashNote/build/intermediates/d8-classes.txt

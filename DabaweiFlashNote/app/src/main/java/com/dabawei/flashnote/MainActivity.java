@@ -135,6 +135,7 @@ public class MainActivity extends Activity {
         database = new FlashNoteDatabase(this);
         reminderScheduler = new ReminderScheduler(this, database);
         reminderScheduler.rescheduleAll();
+        BackgroundSyncScheduler.ensureScheduled(this);
         pullRoot = findViewById(R.id.pullRoot);
         rootLayout = findViewById(R.id.rootLayout);
         pullIndicator = findViewById(R.id.pullIndicator);
@@ -283,6 +284,7 @@ public class MainActivity extends Activity {
             if (reminderScheduler != null) {
                 reminderScheduler.rescheduleAll();
             }
+            BackgroundSyncScheduler.ensureScheduled(this);
         }
     }
 
@@ -322,14 +324,25 @@ public class MainActivity extends Activity {
                     createdAt,
                     FlashNoteDatabase.SYNC_PENDING,
                     FlashNote.TYPE_TODO);
+            final NaturalLanguageReminderParser.Candidate candidate =
+                    NaturalLanguageReminderParser.parse(content, createdAt);
             new AlertDialog.Builder(this)
-                    .setTitle(R.string.todo_badge)
-                    .setMessage(R.string.reminder_add)
+                    .setTitle(candidate == null ? R.string.todo_badge : R.string.p1_natural_time_title)
+                    .setMessage(candidate == null
+                            ? getString(R.string.reminder_add)
+                            : getString(R.string.p1_natural_time_message, candidate.getDisplayTime()))
                     .setNegativeButton(R.string.cancel, null)
-                    .setPositiveButton(R.string.reminder_add, new DialogInterface.OnClickListener() {
+                    .setPositiveButton(candidate == null
+                            ? R.string.reminder_add
+                            : R.string.p1_natural_time_confirm, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            showReminderPicker(ReminderTarget.forLocalNote(savedTodo));
+                            ReminderTarget target = ReminderTarget.forLocalNote(savedTodo);
+                            if (candidate == null) {
+                                showReminderPicker(target);
+                            } else {
+                                saveReminder(target, candidate.getTriggerAt());
+                            }
                         }
                     })
                     .show();
@@ -349,20 +362,18 @@ public class MainActivity extends Activity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                final WebDavTodoSyncReader.Result result = new WebDavTodoSyncReader().read(settings);
+                final TodoSyncCoordinator.SyncResult result = TodoSyncCoordinator.sync(
+                        MainActivity.this,
+                        database,
+                        reminderScheduler);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         todoSyncing = false;
                         if (result.isSuccess()) {
-                            ReminderReconciler.Summary reminderSummary = ReminderReconciler.reconcile(
-                                    database,
-                                    result.getItems(),
-                                    System.currentTimeMillis(),
-                                    reminderScheduler);
                             showTodoItems(result.getItems());
                             String successMessage = getString(R.string.todo_sync_success, result.getItems().size());
-                            if (reminderSummary.getOverdueCount() > 0) {
+                            if (result.getSummary() != null && result.getSummary().getOverdueCount() > 0) {
                                 successMessage += "；" + getString(R.string.reminder_overdue);
                             }
                             Toast.makeText(
@@ -428,6 +439,8 @@ public class MainActivity extends Activity {
         actions.add(ReminderAction.TOMORROW_AT_NINE);
         labels.add(getString(R.string.reminder_custom));
         actions.add(ReminderAction.CUSTOM);
+        labels.add(getString(R.string.p1_multi_reminder));
+        actions.add(ReminderAction.PRE_ALERTS);
         labels.add(getString(R.string.reminder_cancel));
         actions.add(ReminderAction.CANCEL);
 
@@ -445,6 +458,8 @@ public class MainActivity extends Activity {
                             saveReminder(target, ReminderTimeCalculator.todayAt(System.currentTimeMillis(), 18, 0));
                         } else if (action == ReminderAction.TOMORROW_AT_NINE) {
                             saveReminder(target, ReminderTimeCalculator.tomorrowAt(System.currentTimeMillis(), 9, 0));
+                        } else if (action == ReminderAction.PRE_ALERTS) {
+                            showPreAlertPicker(target);
                         } else if (action == ReminderAction.CUSTOM) {
                             showCustomReminderPicker(target);
                         } else {
@@ -521,6 +536,7 @@ public class MainActivity extends Activity {
                 java.util.TimeZone.getDefault().getID());
         database.upsertReminder(record);
         ReminderScheduler.ScheduleResult scheduleResult = reminderScheduler.schedule(record);
+        reminderScheduler.rescheduleOccurrencesForTask(target.taskId);
         requestReminderPermissions();
         if (!scheduleResult.isScheduled()) {
             Toast.makeText(this, R.string.reminder_system_delay, Toast.LENGTH_LONG).show();
@@ -539,12 +555,138 @@ public class MainActivity extends Activity {
             return;
         }
         reminderScheduler.cancel(existing);
+        for (ReminderOccurrence occurrence : database.getReminderOccurrencesForTask(target.taskId)) {
+            reminderScheduler.cancel(occurrence);
+        }
+        database.cancelReminderOccurrences(target.taskId);
         database.upsertReminder(existing.withStatus(
                 ReminderRecord.STATUS_CANCELLED,
                 0L).withLastSyncedAt(System.currentTimeMillis()));
         Toast.makeText(this, R.string.reminder_cancelled, Toast.LENGTH_SHORT).show();
         refreshNotes();
         todoAdapter.notifyDataSetChanged();
+    }
+
+    private void showPreAlertPicker(final ReminderTarget target) {
+        if (target == null || target.taskId.length() == 0) {
+            return;
+        }
+        if (target.dueAt <= 0L) {
+            Toast.makeText(this, R.string.p1_multi_reminder_need_due, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        target.existingReminder = database.getReminderByTaskId(target.taskId);
+        if (target.existingReminder == null) {
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.p1_multi_reminder)
+                    .setMessage(R.string.p1_multi_reminder_need_primary)
+                    .setNegativeButton(R.string.cancel, null)
+                    .setPositiveButton(R.string.reminder_add, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            showReminderPicker(target);
+                        }
+                    })
+                    .show();
+            return;
+        }
+
+        boolean[] checked = new boolean[]{false, false};
+        for (ReminderOccurrence occurrence : database.getReminderOccurrencesForTask(target.taskId)) {
+            boolean active = !ReminderRecord.STATUS_CANCELLED.equals(occurrence.getStatus());
+            if (ReminderOccurrence.KIND_DAY_BEFORE.equals(occurrence.getKind())) {
+                checked[0] = active;
+            } else if (ReminderOccurrence.KIND_HOUR_BEFORE.equals(occurrence.getKind())) {
+                checked[1] = active;
+            }
+        }
+        final boolean[] selected = checked.clone();
+        String[] labels = new String[]{
+                getString(R.string.p1_day_before),
+                getString(R.string.p1_hour_before)
+        };
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.p1_multi_reminder)
+                .setMultiChoiceItems(labels, checked, new DialogInterface.OnMultiChoiceClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+                        selected[which] = isChecked;
+                    }
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.save_settings, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        savePreAlerts(target, selected);
+                    }
+                })
+                .show();
+    }
+
+    private void savePreAlerts(ReminderTarget target, boolean[] selected) {
+        ReminderRecord parent = database.getReminderByTaskId(target.taskId);
+        if (parent == null || parent.getDueAt() <= 0L) {
+            Toast.makeText(this, R.string.p1_multi_reminder_need_primary, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        long now = System.currentTimeMillis();
+        String timeZoneId = java.util.TimeZone.getDefault().getID();
+        String[] kinds = new String[]{
+                ReminderOccurrence.KIND_DAY_BEFORE,
+                ReminderOccurrence.KIND_HOUR_BEFORE
+        };
+        boolean[] choices = selected == null ? new boolean[]{false, false} : selected;
+        List<ReminderOccurrence> existingOccurrences = database.getReminderOccurrencesForTask(target.taskId);
+        for (int index = 0; index < kinds.length; index++) {
+            ReminderOccurrence existing = findOccurrence(existingOccurrences, kinds[index]);
+            if (!choices[index]) {
+                if (existing != null) {
+                    reminderScheduler.cancel(existing);
+                    database.upsertReminderOccurrence(existing.withStatus(
+                            ReminderRecord.STATUS_CANCELLED, 0L).withLastSyncedAt(now));
+                }
+                continue;
+            }
+            long triggerAt = ReminderOccurrence.KIND_DAY_BEFORE.equals(kinds[index])
+                    ? ReminderTimeCalculator.dayBeforeAt(parent.getDueAt(), parent.getDueAtText())
+                    : ReminderTimeCalculator.hourBeforeAt(parent.getDueAt(), parent.getDueAtText());
+            String status = triggerAt > now
+                    ? ReminderRecord.STATUS_SCHEDULED
+                    : ReminderRecord.STATUS_OVERDUE;
+            int notificationId = existing == null
+                    ? ReminderIds.notificationIdForOccurrence(target.taskId, kinds[index])
+                    : existing.getNotificationId();
+            ReminderOccurrence occurrence = new ReminderOccurrence(
+                    existing == null ? 0L : existing.getOccurrenceId(),
+                    target.taskId,
+                    kinds[index],
+                    triggerAt,
+                    0L,
+                    status,
+                    notificationId,
+                    now,
+                    timeZoneId);
+            if (existing != null) {
+                reminderScheduler.cancel(existing);
+            }
+            database.upsertReminderOccurrence(occurrence);
+        }
+        reminderScheduler.rescheduleOccurrencesForTask(target.taskId);
+        requestReminderPermissions();
+        Toast.makeText(this, R.string.p1_multi_reminder_saved, Toast.LENGTH_SHORT).show();
+        todoAdapter.notifyDataSetChanged();
+    }
+
+    private ReminderOccurrence findOccurrence(List<ReminderOccurrence> occurrences, String kind) {
+        if (occurrences == null) {
+            return null;
+        }
+        for (ReminderOccurrence occurrence : occurrences) {
+            if (occurrence != null && kind.equals(occurrence.getKind())) {
+                return occurrence;
+            }
+        }
+        return null;
     }
 
     private void requestReminderPermissions() {
@@ -1595,6 +1737,7 @@ public class MainActivity extends Activity {
         static final int TOMORROW_AT_NINE = 3;
         static final int CUSTOM = 4;
         static final int CANCEL = 5;
+        static final int PRE_ALERTS = 6;
 
         private ReminderAction() {
         }

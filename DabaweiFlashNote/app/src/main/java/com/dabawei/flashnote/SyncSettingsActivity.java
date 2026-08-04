@@ -3,6 +3,7 @@ package com.dabawei.flashnote;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.app.TimePickerDialog;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Build;
@@ -39,6 +40,11 @@ public final class SyncSettingsActivity extends Activity {
     private FlashNoteDatabase database;
     private Spinner themeSpinner;
     private Button exportButton;
+    private CheckBox dailyOverviewEnabled;
+    private Button dailyOverviewTimeButton;
+    private CheckBox backgroundSyncEnabled;
+    private CheckBox lockscreenPrivate;
+    private TextView reminderDiagnostics;
     private ThemePalette currentTheme;
 
     private static final String THEME_PREFS_NAME = "dabawei_flashnote_prefs";
@@ -62,6 +68,12 @@ public final class SyncSettingsActivity extends Activity {
         exportButton = findViewById(R.id.exportButton);
         Button reminderNotificationSettings = findViewById(R.id.reminderNotificationSettingsButton);
         Button reminderExactSettings = findViewById(R.id.reminderExactSettingsButton);
+        dailyOverviewEnabled = findViewById(R.id.dailyOverviewEnabled);
+        dailyOverviewTimeButton = findViewById(R.id.dailyOverviewTimeButton);
+        backgroundSyncEnabled = findViewById(R.id.backgroundSyncEnabled);
+        lockscreenPrivate = findViewById(R.id.lockscreenPrivate);
+        reminderDiagnostics = findViewById(R.id.reminderDiagnostics);
+        Button refreshReminderDiagnostics = findViewById(R.id.refreshReminderDiagnosticsButton);
         TextView versionInfo = findViewById(R.id.versionInfo);
         Button save = findViewById(R.id.saveSyncSettingsButton);
 
@@ -72,6 +84,11 @@ public final class SyncSettingsActivity extends Activity {
         password.setText(settings.getPassword());
         remotePath.setText(settings.getRemotePath());
         anchor.setText(settings.getAnchor());
+        dailyOverviewEnabled.setChecked(ReminderSettings.isDailyOverviewEnabled(this));
+        backgroundSyncEnabled.setChecked(ReminderSettings.isBackgroundSyncEnabled(this));
+        lockscreenPrivate.setChecked(ReminderSettings.isLockScreenPrivate(this));
+        updateDailyOverviewTimeLabel();
+        refreshReminderDiagnostics();
 
         SharedPreferences themePrefs = getSharedPreferences(THEME_PREFS_NAME, MODE_PRIVATE);
         currentTheme = ThemePalette.findByKey(themePrefs.getString(PREF_THEME_KEY, "paper"));
@@ -110,6 +127,70 @@ public final class SyncSettingsActivity extends Activity {
             }
         });
 
+        dailyOverviewEnabled.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ReminderSettings.setDailyOverviewEnabled(
+                        SyncSettingsActivity.this,
+                        dailyOverviewEnabled.isChecked());
+                new ReminderScheduler(SyncSettingsActivity.this, database).rescheduleDailyOverview();
+                refreshReminderDiagnostics();
+            }
+        });
+
+        dailyOverviewTimeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                new TimePickerDialog(
+                        SyncSettingsActivity.this,
+                        new TimePickerDialog.OnTimeSetListener() {
+                            @Override
+                            public void onTimeSet(android.widget.TimePicker timePicker, int hour, int minute) {
+                                ReminderSettings.setDailyOverviewTime(
+                                        SyncSettingsActivity.this,
+                                        hour,
+                                        minute);
+                                updateDailyOverviewTimeLabel();
+                                new ReminderScheduler(SyncSettingsActivity.this, database).rescheduleDailyOverview();
+                                refreshReminderDiagnostics();
+                            }
+                        },
+                        ReminderSettings.getDailyOverviewHour(SyncSettingsActivity.this),
+                        ReminderSettings.getDailyOverviewMinute(SyncSettingsActivity.this),
+                        true)
+                        .show();
+            }
+        });
+
+        backgroundSyncEnabled.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ReminderSettings.setBackgroundSyncEnabled(
+                        SyncSettingsActivity.this,
+                        backgroundSyncEnabled.isChecked());
+                BackgroundSyncScheduler.ensureScheduled(SyncSettingsActivity.this);
+                refreshReminderDiagnostics();
+            }
+        });
+
+        lockscreenPrivate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ReminderSettings.setLockScreenPrivate(
+                        SyncSettingsActivity.this,
+                        lockscreenPrivate.isChecked());
+                ReminderScheduler.ensureNotificationChannel(SyncSettingsActivity.this);
+                refreshReminderDiagnostics();
+            }
+        });
+
+        refreshReminderDiagnostics.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                refreshReminderDiagnostics();
+            }
+        });
+
         claudeFontStyle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -140,10 +221,65 @@ public final class SyncSettingsActivity extends Activity {
                         password.getText().toString(),
                         remotePath.getText().toString(),
                         anchor.getText().toString());
+                BackgroundSyncScheduler.ensureScheduled(SyncSettingsActivity.this);
+                new ReminderScheduler(SyncSettingsActivity.this, database).rescheduleDailyOverview();
                 Toast.makeText(SyncSettingsActivity.this, R.string.settings_saved, Toast.LENGTH_SHORT).show();
                 finish();
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (reminderDiagnostics != null) {
+            refreshReminderDiagnostics();
+        }
+    }
+
+    private void updateDailyOverviewTimeLabel() {
+        if (dailyOverviewTimeButton == null) {
+            return;
+        }
+        dailyOverviewTimeButton.setText(getString(
+                R.string.p1_daily_overview_time,
+                ReminderSettings.getDailyOverviewHour(this),
+                ReminderSettings.getDailyOverviewMinute(this)));
+    }
+
+    private void refreshReminderDiagnostics() {
+        if (reminderDiagnostics == null) {
+            return;
+        }
+        boolean notificationsAllowed = Build.VERSION.SDK_INT < 33
+                || checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                == android.content.pm.PackageManager.PERMISSION_GRANTED;
+        String notificationState = Build.VERSION.SDK_INT < 33
+                ? "系统无需运行时通知权限"
+                : (notificationsAllowed ? "已允许" : "未允许");
+        String exactState = Build.VERSION.SDK_INT < 31
+                ? "系统无需特殊精确提醒权限"
+                : (ReminderScheduler.isExactAlarmAllowed(this) ? "已开启" : "未开启");
+        String overviewState = ReminderSettings.isDailyOverviewEnabled(this)
+                ? getString(
+                        R.string.p1_daily_overview_time,
+                        ReminderSettings.getDailyOverviewHour(this),
+                        ReminderSettings.getDailyOverviewMinute(this))
+                : "未开启";
+        String backgroundState = ReminderSettings.isBackgroundSyncEnabled(this)
+                ? "已开启（约每6小时）"
+                : "未开启";
+        String privacyState = ReminderSettings.isLockScreenPrivate(this) ? "隐藏" : "显示";
+        StringBuilder builder = new StringBuilder();
+        builder.append(getString(R.string.p1_reminder_diagnostics)).append('\n')
+                .append("通知权限：").append(notificationState).append('\n')
+                .append("精确提醒：").append(exactState).append('\n')
+                .append("每日概览：").append(overviewState).append('\n')
+                .append("后台同步：").append(backgroundState).append('\n')
+                .append("锁屏内容：").append(privacyState).append('\n')
+                .append("上次同步：").append(ReminderSettings.formatLastSync(this)).append('\n')
+                .append("已调度提醒：").append(database.getScheduledReminderCount()).append(" 条");
+        reminderDiagnostics.setText(builder.toString());
     }
 
     private void bindVersionInfo(TextView versionInfo) {

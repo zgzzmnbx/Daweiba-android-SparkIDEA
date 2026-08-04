@@ -40,4 +40,61 @@ public final class ReminderTimeCalculator {
         calendar.set(year, month, day, hour, minute, 0);
         return calendar.getTimeInMillis();
     }
+
+    public static long dayBeforeAt(long dueAt) {
+        return preAlertAt(dueAt, ReminderOccurrence.KIND_DAY_BEFORE);
+    }
+
+    public static long dayBeforeAt(long dueAt, String dueAtText) {
+        if (!isDateOnly(dueAtText)) {
+            return dueAt > 0L ? dueAt - 24L * MILLIS_PER_HOUR : 0L;
+        }
+        return dayBeforeAt(dueAt);
+    }
+
+    public static long hourBeforeAt(long dueAt) {
+        return preAlertAt(dueAt, ReminderOccurrence.KIND_HOUR_BEFORE);
+    }
+
+    public static long hourBeforeAt(long dueAt, String dueAtText) {
+        if (!isDateOnly(dueAtText)) {
+            return dueAt > 0L ? dueAt - MILLIS_PER_HOUR : 0L;
+        }
+        return hourBeforeAt(dueAt);
+    }
+
+    public static long todayStart(long nowMillis) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(nowMillis);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTimeInMillis();
+    }
+
+    public static long todayEnd(long nowMillis) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(todayStart(nowMillis));
+        calendar.add(Calendar.DAY_OF_YEAR, 1);
+        return calendar.getTimeInMillis() - 1L;
+    }
+
+    private static long preAlertAt(long dueAt, String kind) {
+        if (dueAt <= 0L) {
+            return 0L;
+        }
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(dueAt);
+        calendar.set(Calendar.HOUR_OF_DAY, ReminderOccurrence.KIND_DAY_BEFORE.equals(kind) ? 9 : 17);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        calendar.add(Calendar.DAY_OF_YEAR, ReminderOccurrence.KIND_DAY_BEFORE.equals(kind) ? -1 : 0);
+        return calendar.getTimeInMillis();
+    }
+
+    private static boolean isDateOnly(String dueAtText) {
+        return dueAtText != null && dueAtText.trim().length() == TodoDateTime.DATE_PATTERN.length();
+    }
 }

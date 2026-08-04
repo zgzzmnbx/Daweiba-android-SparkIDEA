@@ -12,8 +12,9 @@ Android 本地闪念捕捉 App。核心目标是打开即写、下拉保存、�
 
 ## 当前状态
 
-- 当前 APK 基线：`versionCode=48`，`versionName=0.48-todo-reminders`。
-- 当前 P0：已完成待办提醒协议、SQLite 对账、单次本地调度、通知操作、重启/时间变化恢复、Obsidian 插件字段同步和权限降级提示。
+- 当前 APK 基线：`versionCode=49`，`versionName=0.49-p1-todo-reminders`。
+- 当前 P0/P1：已完成待办提醒协议、SQLite 对账、单次与多级本地调度、每日待办概览、低频后台同步、自然语言提醒确认、通知隐私策略、提醒诊断、重启/时间变化恢复和权限降级提示。
+- P1 后台同步默认关闭，开启后由 JobScheduler 约每 6 小时尽力执行；已保存到手机的提醒不依赖后台同步。
 - Obsidian 待办同步插件：`v1.3.0`；原始任务笔记不做批量回写，仅更新单一同步文件。
 - 当前技术栈：原生 Android XML + Java，手工 Android SDK 构建。
 - 当前包名：`com.dabawei.flashnote`。
@@ -44,6 +45,7 @@ build\outputs\DabaweiFlashNote-debug.apk
 powershell -ExecutionPolicy Bypass -File .\tools\test-hello.ps1
 powershell -ExecutionPolicy Bypass -File .\tools\test-markdown-exporter.ps1
 powershell -ExecutionPolicy Bypass -File .\tools\test-reminder-p0.ps1
+powershell -ExecutionPolicy Bypass -File .\tools\test-reminder-p1.ps1
 ```
 
 ## 安装到真机

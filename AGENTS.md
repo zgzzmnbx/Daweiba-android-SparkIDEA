@@ -56,3 +56,6 @@ D:\Dev\Android\AndroidStudio\Start-Android-Studio-D.cmd
 - `tools\build-apk.ps1` 生成 `BuildInfo.java` 时必须使用无 BOM UTF-8；Windows PowerShell 的 `Set-Content -Encoding UTF8` 可能写入 BOM，导致 `javac` 报 `非法字符: '\ufeff'`。
 - Windows 下新增提醒类较多时，d8 可能触发“命令行过长”；`tools\build-apk.ps1` 已固定使用无 BOM UTF-8 参数文件调用 d8，不要改回逐个展开 class 文件路径。
 - 待办提醒数据库使用普通应用存储，`ReminderReceiver` 不声明 direct boot；提醒恢复依赖开机、系统时间和时区广播，修改提醒权限或通知权限时必须保留设置入口与非精确调度降级。
+- P1 后台同步默认关闭，开启后由 JobScheduler 约每 6 小时尽力执行；系统省电、网络和厂商后台策略可能延迟，不能把它当作实时同步或提醒触发链路。
+- 多级提醒按 `reminder_occurrences` 独立保存；具体截止时分按提前 24 小时 / 1 小时计算，仅日期按前一天 09:00、截止日 17:00 计算，修改主提醒或截止时间后必须重新调度 occurrence。
+- 锁屏隐私同时由通知正文和通知可见性控制；修改设置后要重新创建通知通道并保持通知内不显示待办正文，不能只依赖系统锁屏设置。

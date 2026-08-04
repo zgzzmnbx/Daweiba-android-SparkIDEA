@@ -3,6 +3,8 @@ package com.dabawei.flashnote;
 import java.util.Locale;
 
 public final class ReminderIds {
+    public static final int DAILY_OVERVIEW_NOTIFICATION_ID = 0x5d410001;
+
     private ReminderIds() {
     }
 
@@ -14,6 +16,10 @@ public final class ReminderIds {
         long hash = fnv1a(taskId == null ? "" : taskId);
         int notificationId = (int) (hash & 0x7fffffffL);
         return notificationId == 0 ? 1 : notificationId;
+    }
+
+    public static int notificationIdForOccurrence(String taskId, String kind) {
+        return notificationIdForTaskId((taskId == null ? "" : taskId) + "|" + (kind == null ? "" : kind));
     }
 
     public static String generatedTaskId(String sourcePath, int lineNumber, String text) {

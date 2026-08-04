@@ -18,6 +18,7 @@ public final class ReminderReconciler {
         int scheduledCount = 0;
         for (ReminderRecord record : plan.getCancellations()) {
             scheduler.cancel(record);
+            cancelOccurrences(database, scheduler, record.getTaskId());
             database.upsertReminder(record.withLastSyncedAt(nowMillis));
         }
         for (ReminderRecord record : plan.getUpserts()) {
@@ -29,9 +30,21 @@ public final class ReminderReconciler {
                 scheduledCount++;
             } else {
                 scheduler.cancel(synced);
+                cancelOccurrences(database, scheduler, synced.getTaskId());
             }
+            scheduler.rescheduleOccurrencesForTask(synced.getTaskId());
         }
         return new Summary(scheduledCount, plan.getCancellations().size(), plan.getOverdueCount());
+    }
+
+    private static void cancelOccurrences(
+            FlashNoteDatabase database,
+            ReminderScheduler scheduler,
+            String taskId) {
+        for (ReminderOccurrence occurrence : database.getReminderOccurrencesForTask(taskId)) {
+            scheduler.cancel(occurrence);
+        }
+        database.cancelReminderOccurrences(taskId);
     }
 
     public static final class Summary {
