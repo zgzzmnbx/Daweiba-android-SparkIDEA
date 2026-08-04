@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="screen_background">#F7F4EE</color>
+    <color name="surface_background">#FFFFFF</color>
+    <color name="primary_text">#18211F</color>
+    <color name="secondary_text">#6B706D</color>
+    <color name="accent_green">#1C7C54</color>
+    <color name="accent_green_dark">#145C3E</color>
+    <color name="field_border">#D8D2C6</color>
+    <color name="business_blue">#1E5AA8</color>
+</resources>

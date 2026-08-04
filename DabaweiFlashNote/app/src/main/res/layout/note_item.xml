@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingLeft="0dp"
+    android:paddingRight="0dp">
+
+    <FrameLayout
+        android:layout_width="30dp"
+        android:layout_height="match_parent">
+
+        <View
+            android:id="@+id/timelineLine"
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_horizontal"
+            android:background="#E6EAE7" />
+
+        <TextView
+            android:id="@+id/timelineDot"
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:layout_gravity="top|center_horizontal"
+            android:layout_marginTop="28dp"
+            android:background="@drawable/timeline_dot_background" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/noteCard"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:layout_weight="1"
+        android:background="@drawable/note_item_background"
+        android:clickable="true"
+        android:focusable="true"
+        android:orientation="vertical"
+        android:paddingLeft="16dp"
+        android:paddingTop="14dp"
+        android:paddingRight="12dp"
+        android:paddingBottom="12dp">
+
+        <TextView
+            android:id="@+id/noteContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:lineSpacingExtra="3dp"
+            android:textColor="@color/primary_text"
+            android:textSize="16sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="34dp"
+            android:layout_marginTop="10dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/noteTime"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="@color/secondary_text"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/todoBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="26dp"
+                android:background="@drawable/todo_badge_background"
+                android:gravity="center"
+                android:minWidth="48dp"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
+                android:text="@string/todo_badge"
+                android:textColor="#15559A"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/syncBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="26dp"
+                android:layout_marginLeft="8dp"
+                android:background="@drawable/synced_badge_background"
+                android:gravity="center"
+                android:minWidth="58dp"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
+                android:text="@string/synced_badge"
+                android:textColor="#1C4E35"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/deleteButton"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginLeft="8dp"
+                android:background="@android:color/transparent"
+                android:contentDescription="@string/delete_note"
+                android:padding="8dp"
+                android:scaleType="center"
+                android:src="@drawable/ic_trash" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

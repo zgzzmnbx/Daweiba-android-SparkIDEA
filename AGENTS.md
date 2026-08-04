@@ -1,0 +1,56 @@
+# 项目 AGENTS.md
+
+## 项目定位
+
+这是一个 Android 手机 App 开发项目，当前阶段采用轻量命令行开发环境，由 Codex 负责主要代码编写、构建、安装和日志排查。优先使用 vivo X200 Pro 真机调试。
+
+产品需求、当前功能、数据协议和未来规划以 `DabaweiFlashNote\PRD.md` 为准；`AGENTS.md` 只保留环境、协作、构建和验证规则。
+
+## 协作规则
+
+- 优先把大体积开发依赖放到 D 盘，避免占用 C 盘。
+- 当前阶段已安装 Android Studio zip 版到 D 盘；不安装 Android Emulator、NDK、Flutter、React Native，除非后续需求明确需要。
+- Android SDK 固定使用 `D:\Dev\Android\sdk`。
+- JDK 固定使用 `D:\Dev\Java\jdk-17`。
+- Gradle 缓存固定使用 `D:\Dev\.gradle`。
+- Android Studio 固定使用 `D:\Dev\Android\AndroidStudio\android-studio`。
+- Android Studio 优先通过 `D:\Dev\Android\AndroidStudio\Start-Android-Studio-D.cmd` 启动。
+- Android Studio 的 config/system/plugins/log 固定使用 `D:\Dev\Android\AndroidStudio\profile`。
+- Android 用户配置和 AVD 目录固定使用 `D:\Dev\Android\.android` 与 `D:\Dev\Android\.android\avd`。
+- 新建 Android 项目时，优先使用项目内 Gradle Wrapper，不要求全局安装 Gradle。
+- 如 Gradle 分发包下载不稳定，可先用 Android SDK Build Tools 手工构建最小 APK，确保真机链路先跑通，再补 Gradle 工程化。
+- 修改项目配置后必须实际运行构建命令验证；能真机安装时，继续用 `adb install` 或 Gradle install task 验证。
+
+## 验证方式
+
+基础环境验证命令：
+
+```powershell
+java -version
+sdkmanager --version
+adb version
+adb devices
+sdkmanager --sdk_root=D:\Dev\Android\sdk --list_installed
+```
+
+Android Studio 检查路径：
+
+```powershell
+D:\Dev\Android\AndroidStudio\android-studio\bin\studio64.exe
+D:\Dev\Android\AndroidStudio\Start-Android-Studio-D.cmd
+```
+
+真机验证要求：
+
+- `adb devices` 能看到 vivo X200 Pro。
+- 设备状态必须为 `device`，不能是 `unauthorized`。
+- 如果设备不可见，优先检查手机 USB 调试、数据线模式、授权弹窗和 Windows 设备管理器驱动。
+
+## 项目经验 / 注意事项
+
+- C 盘空间不足，本项目不要把 SDK、Gradle 缓存、模拟器镜像放到 C 盘。
+- `C:\Users\zgzzm\.android` 可能已经存在少量 adb key 等旧配置，通常占用很小；后续新配置优先通过 `ANDROID_USER_HOME` 放到 D 盘。
+- Android Studio 首次启动时，如提示安装 SDK 或模拟器，不要选默认 C 盘路径；SDK 选择 `D:\Dev\Android\sdk`，模拟器暂不安装。
+- 新开 PowerShell 或 Codex 线程后，用户级环境变量才会天然生效；当前会话如找不到命令，先临时设置 `JAVA_HOME`、`ANDROID_HOME`、`ANDROID_SDK_ROOT` 和 `Path`。
+- 每次版本更新或输出新的 `DabaweiFlashNote` APK 前，必须先备份核心代码，不再备份 APK；当前由 `DabaweiFlashNote\tools\backup-core-code.py` 和 `tools\build-apk.ps1` 自动执行，备份输出到 `DabaweiFlashNote\90-版本代码备份\`，命名为 `DabaweiFlashNote-版本号-日期.zip`。
+- `tools\build-apk.ps1` 生成 `BuildInfo.java` 时必须使用无 BOM UTF-8；Windows PowerShell 的 `Set-Content -Encoding UTF8` 可能写入 BOM，导致 `javac` 报 `非法字符: '\ufeff'`。
