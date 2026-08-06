@@ -49,6 +49,7 @@ D:\Dev\Android\AndroidStudio\Start-Android-Studio-D.cmd
 ## 项目经验 / 注意事项
 
 - C 盘空间不足，本项目不要把 SDK、Gradle 缓存、模拟器镜像放到 C 盘。
+- 本项目固定归档、备份和推送到 GitHub 仓库 `https://github.com/zgzzmnbx/Daweiba-android-SparkIDEA`，默认分支为 `master`。涉及代码、配置、构建脚本、PRD、README 等重要变更时，先检查 `git status` 并完成本地提交或备份标签，再执行 `git push origin master`；不得使用强制推送覆盖远端历史。当前规则落盘后的配套备份标签为 `backup-20260806-git-archive-rule`。
 - `C:\Users\zgzzm\.android` 可能已经存在少量 adb key 等旧配置，通常占用很小；后续新配置优先通过 `ANDROID_USER_HOME` 放到 D 盘。
 - Android Studio 首次启动时，如提示安装 SDK 或模拟器，不要选默认 C 盘路径；SDK 选择 `D:\Dev\Android\sdk`，模拟器暂不安装。
 - 新开 PowerShell 或 Codex 线程后，用户级环境变量才会天然生效；当前会话如找不到命令，先临时设置 `JAVA_HOME`、`ANDROID_HOME`、`ANDROID_SDK_ROOT` 和 `Path`。

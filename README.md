@@ -8,6 +8,13 @@
 
 产品需求、当前功能、数据协议和未来规划已沉淀到 `DabaweiFlashNote\PRD.md`；本 README 主要保留开发环境、构建链路和历史交接信息。
 
+## Git 归档
+
+- 固定归档仓库：[zgzzmnbx/Daweiba-android-SparkIDEA](https://github.com/zgzzmnbx/Daweiba-android-SparkIDEA)。
+- 默认推送分支：`master`。
+- 规则：重要代码、配置、构建脚本和项目文档变更后，先本地提交或创建备份标签，再推送到 `origin/master`；不使用强制推送覆盖远端历史。
+- 本次规则写入项目文件后的备份标签：`backup-20260806-git-archive-rule`。
+
 ## 当前环境状态
 
 - 系统：Windows，PowerShell

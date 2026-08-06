@@ -22,6 +22,13 @@ Android 本地闪念捕捉 App。核心目标是打开即写、下拉保存、�
 - 当前产品名：`大尾巴闪念`。
 - 命名说明：`dabawei` 是早期拼写债务，正确拼写应为 `daweiba`；包名修改涉及 Android 数据迁移，暂不贸然调整。
 
+## Git 归档与推送
+
+- 固定归档仓库：[zgzzmnbx/Daweiba-android-SparkIDEA](https://github.com/zgzzmnbx/Daweiba-android-SparkIDEA)。
+- 默认分支：`master`。
+- 重要代码、配置、构建脚本、PRD 或 README 变更后，先完成本地提交或备份标签，再推送到 `origin/master`；不得强制覆盖远端历史。
+- 本次规则写入项目文件后的备份标签：`backup-20260806-git-archive-rule`。
+
 ## 构建
 
 ```powershell
