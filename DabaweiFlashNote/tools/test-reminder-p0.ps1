@@ -106,8 +106,8 @@ foreach ($marker in @(
   }
 }
 
-if ($build -notmatch '\$versionCode\s*=\s*"49"' -or $build -notmatch '\$versionName\s*=\s*"0\.49-p1-todo-reminders"') {
-  throw "Build version is not 49 / 0.49-p1-todo-reminders"
+if ($build -notmatch '\$versionCode\s*=\s*"50"' -or $build -notmatch '\$versionName\s*=\s*"0\.50-auto-natural-reminders"') {
+  throw "Build version is not 50 / 0.50-auto-natural-reminders"
 }
 
 Write-Output "Reminder P0 static test passed."

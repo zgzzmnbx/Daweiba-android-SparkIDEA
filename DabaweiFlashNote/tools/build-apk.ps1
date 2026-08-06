@@ -29,8 +29,8 @@ if (($env:Path -split ";") -notcontains $javaBin) {
   $env:Path = $javaBin + ";" + $env:Path
 }
 
-$versionCode = "49"
-$versionName = "0.49-p1-todo-reminders"
+$versionCode = "50"
+$versionName = "0.50-auto-natural-reminders"
 
 $backupScript = Join-Path $projectRoot "tools\backup-core-code.py"
 $python = Get-Command python -ErrorAction SilentlyContinue

@@ -70,6 +70,11 @@
     <string name="p1_natural_time_message">已识别：%1$s
 原文保留不变，是否设置提醒？</string>
     <string name="p1_natural_time_confirm">设置提醒</string>
+    <string name="p1_natural_time_auto_message">已自动设置提醒：%1$s
+原文保留不变，可撤销或修改。</string>
+    <string name="p1_natural_time_undo">撤销自动提醒</string>
+    <string name="p1_natural_time_modify">修改提醒</string>
+    <string name="p1_natural_time_conflict">发现多个时间，请选择一个提醒时间。</string>
     <string name="p1_multi_reminder">多级提醒</string>
     <string name="p1_multi_reminder_need_due">设置多级提醒需要截止日期</string>
     <string name="p1_multi_reminder_need_primary">请先设置一条主提醒，再启用多级提醒。</string>

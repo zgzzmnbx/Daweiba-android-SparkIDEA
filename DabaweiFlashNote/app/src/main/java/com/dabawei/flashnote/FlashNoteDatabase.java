@@ -11,7 +11,7 @@ import java.util.List;
 
 public final class FlashNoteDatabase extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "dabawei_flash_notes.db";
-    private static final int DATABASE_VERSION = 7;
+    private static final int DATABASE_VERSION = 8;
     private static final String TABLE_NOTES = "flash_notes";
     private static final String TABLE_REMINDERS = "reminders";
     private static final String TABLE_TODO_ITEMS = "todo_items";
@@ -58,6 +58,18 @@ public final class FlashNoteDatabase extends SQLiteOpenHelper {
         }
         if (oldVersion < 7) {
             createOccurrencesTable(db);
+        }
+        if (oldVersion >= 4 && oldVersion < 8) {
+            db.execSQL("ALTER TABLE " + TABLE_REMINDERS
+                    + " ADD COLUMN reminder_source TEXT NOT NULL DEFAULT ''");
+            db.execSQL("ALTER TABLE " + TABLE_REMINDERS
+                    + " ADD COLUMN source_expression TEXT NOT NULL DEFAULT ''");
+            db.execSQL("ALTER TABLE " + TABLE_REMINDERS
+                    + " ADD COLUMN source_signature TEXT NOT NULL DEFAULT ''");
+            db.execSQL("ALTER TABLE " + TABLE_REMINDERS
+                    + " ADD COLUMN natural_reference_at INTEGER NOT NULL DEFAULT 0");
+            db.execSQL("ALTER TABLE " + TABLE_REMINDERS
+                    + " ADD COLUMN auto_suppressed INTEGER NOT NULL DEFAULT 0");
         }
     }
 
@@ -316,7 +328,12 @@ public final class FlashNoteDatabase extends SQLiteOpenHelper {
                 "due_at_text TEXT NOT NULL DEFAULT '', " +
                 "remind_at_text TEXT NOT NULL DEFAULT '', " +
                 "remote_remind_at_text TEXT NOT NULL DEFAULT '', " +
-                "time_zone_id TEXT NOT NULL DEFAULT ''" +
+                "time_zone_id TEXT NOT NULL DEFAULT '', " +
+                "reminder_source TEXT NOT NULL DEFAULT '', " +
+                "source_expression TEXT NOT NULL DEFAULT '', " +
+                "source_signature TEXT NOT NULL DEFAULT '', " +
+                "natural_reference_at INTEGER NOT NULL DEFAULT 0, " +
+                "auto_suppressed INTEGER NOT NULL DEFAULT 0" +
                 ")");
     }
 
@@ -367,6 +384,11 @@ public final class FlashNoteDatabase extends SQLiteOpenHelper {
         values.put("remind_at_text", reminder.getRemindAtText());
         values.put("remote_remind_at_text", reminder.getRemoteRemindAtText());
         values.put("time_zone_id", reminder.getTimeZoneId());
+        values.put("reminder_source", reminder.getReminderSource());
+        values.put("source_expression", reminder.getSourceExpression());
+        values.put("source_signature", reminder.getSourceSignature());
+        values.put("natural_reference_at", reminder.getNaturalReferenceAt());
+        values.put("auto_suppressed", reminder.isAutoSuppressed() ? 1 : 0);
         return values;
     }
 
@@ -391,7 +413,8 @@ public final class FlashNoteDatabase extends SQLiteOpenHelper {
                         "reminder_id", "task_id", "local_note_id", "task_text", "source_path",
                         "source_block_id", "due_at", "remind_at", "snooze_until", "status",
                         "notification_id", "last_synced_at", "due_at_text", "remind_at_text",
-                        "remote_remind_at_text", "time_zone_id"
+                        "remote_remind_at_text", "time_zone_id", "reminder_source",
+                        "source_expression", "source_signature", "natural_reference_at", "auto_suppressed"
                 },
                 selection,
                 selectionArgs,
@@ -416,7 +439,12 @@ public final class FlashNoteDatabase extends SQLiteOpenHelper {
                         cursor.getString(12),
                         cursor.getString(13),
                         cursor.getString(14),
-                        cursor.getString(15)));
+                        cursor.getString(15),
+                        cursor.getString(16),
+                        cursor.getString(17),
+                        cursor.getString(18),
+                        cursor.getLong(19),
+                        cursor.getInt(20) != 0));
             }
         } finally {
             cursor.close();

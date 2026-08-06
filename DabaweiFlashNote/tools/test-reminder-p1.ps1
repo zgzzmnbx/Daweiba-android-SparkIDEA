@@ -85,6 +85,10 @@ foreach ($resource in @(
   "p1_lock_screen_private",
   "p1_reminder_diagnostics",
   "p1_natural_time_title",
+  "p1_natural_time_auto_message",
+  "p1_natural_time_undo",
+  "p1_natural_time_modify",
+  "p1_natural_time_conflict",
   "p1_multi_reminder",
   "p1_day_before",
   "p1_hour_before"
@@ -97,6 +101,12 @@ foreach ($resource in @(
 foreach ($marker in @(
   "TABLE_TODO_ITEMS",
   "TABLE_OCCURRENCES",
+  "DATABASE_VERSION = 8",
+  "reminder_source",
+  "source_expression",
+  "source_signature",
+  "natural_reference_at",
+  "auto_suppressed",
   "replaceRemoteTodos",
   "getOverviewTodos",
   "getScheduledReminderCount",
@@ -132,6 +142,10 @@ foreach ($marker in @(
 
 foreach ($marker in @(
   "NaturalLanguageReminderParser.parse",
+  "NaturalLanguageReminderParser.parseResult",
+  "saveAutomaticReminder",
+  "p1_natural_time_undo",
+  "p1_natural_time_modify",
   "showPreAlertPicker",
   "savePreAlerts",
   "PRE_ALERTS"
@@ -151,8 +165,8 @@ foreach ($marker in @(
   }
 }
 
-if ($build -notmatch '\$versionCode\s*=\s*"49"' -or $build -notmatch '\$versionName\s*=\s*"0\.49-p1-todo-reminders"') {
-  throw "Build version is not 49 / 0.49-p1-todo-reminders"
+if ($build -notmatch '\$versionCode\s*=\s*"50"' -or $build -notmatch '\$versionName\s*=\s*"0\.50-auto-natural-reminders"') {
+  throw "Build version is not 50 / 0.50-auto-natural-reminders"
 }
 
 Write-Output "Reminder P1 pure-Java and static tests passed."

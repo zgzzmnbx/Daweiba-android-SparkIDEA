@@ -34,6 +34,19 @@ public final class ReminderTimeCalculator {
         return calendar.getTimeInMillis();
     }
 
+    public static long dueDefaultAt(long dueAt) {
+        if (dueAt <= 0L) {
+            return 0L;
+        }
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(dueAt);
+        calendar.set(Calendar.HOUR_OF_DAY, 8);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTimeInMillis();
+    }
+
     public static long atDateAndTime(int year, int month, int day, int hour, int minute) {
         Calendar calendar = Calendar.getInstance();
         calendar.clear();
