@@ -52,6 +52,7 @@
     <string name="reminder_saved">已设置提醒：%1$s</string>
     <string name="reminder_cancelled">已取消提醒</string>
     <string name="reminder_overdue">提醒时间已过期，请在待办页查看</string>
+    <string name="reminder_overdue_badge">已过期 · 查看待办</string>
     <string name="reminder_notification_permission_explain">待办提醒需要通知权限，才能在锁屏和 App 退出后提醒你。</string>
     <string name="reminder_exact_permission_explain">精确提醒可让待办尽量在设定分钟触发；未开启时仍会提醒，但系统可能延迟。</string>
     <string name="reminder_open_settings">去开启</string>

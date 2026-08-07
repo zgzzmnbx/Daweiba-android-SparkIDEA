@@ -2063,7 +2063,7 @@ public class MainActivity extends Activity {
                 holder.reminderBadge.setText(getString(R.string.reminder_bell, remindText));
                 holder.reminderBadge.setVisibility(View.VISIBLE);
             } else if (localReminder != null && ReminderRecord.STATUS_OVERDUE.equals(localReminder.getStatus())) {
-                holder.reminderBadge.setText(R.string.reminder_overdue);
+                holder.reminderBadge.setText(R.string.reminder_overdue_badge);
                 holder.reminderBadge.setVisibility(View.VISIBLE);
             } else {
                 holder.reminderBadge.setVisibility(View.GONE);
