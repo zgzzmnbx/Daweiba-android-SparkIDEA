@@ -21,7 +21,7 @@
 
 ## 现状与任务 0
 
-2026-08-07 实测：`master` 与 `origin/master` 同为 `34a9c8d`；原生 XML+Java、minSdk 23/targetSdk 35；5 个布局、3 个 Activity、4 个底部导航入口、8 个旧主题；vivo V2405A 在线，1260×2800、560dpi，已安装 v51。工作树已有 build 产物与截图变化，不属于本任务。
+2026-08-07 实测：`master` 与 `origin/master` 同为含本任务书的 `087402c`，其父提交 `34a9c8d` 是 v51 代码基线；原生 XML+Java、minSdk 23/targetSdk 35；5 个布局、3 个 Activity、4 个底部导航入口、8 个旧主题；vivo V2405A 在线，1260×2800、560dpi，已安装 v51。工作树另有源码、脚本、build 产物与截图变化，不属于本任务，不得覆盖或纳入提交。
 
 先运行 `git status --short --branch`、`git log -1 --oneline --decorate`、`adb devices -l` 核对；不一致就把证据写在 `BLOCKED.md` 顶部，仅做不受影响部分。一致后在当前 HEAD 建唯一可回退标签 `backup-20260807-before-shadcn-rhea-ui`，再把目标/顺序/最大风险写入 `PROGRESS.md`，不超过 10 行。
 
