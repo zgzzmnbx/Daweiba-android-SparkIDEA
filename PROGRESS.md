@@ -7,4 +7,4 @@
 - 任务2续修：双主题、旧偏好迁移、原有 14 个图标已按基线恢复；提醒/同步标签和顶部同步按钮已改为浅色语义组合；待办占位与设置安全区/固定底导已修复，加入苹方字体选项。
 - 回归完成：五个既有脚本均 exit=0；故障注入 UI 对比度 exit=1，恢复后 exit=0；git diff --check exit=0。
 - 构建/交付：v52/0.6.0-shadcn-rhea-ui，签名 v1/v2/v3 全通过；首轮提交 02ed227，反馈修订提交 24cbc19，均已推送 origin/master。
-- 云端提醒已实现并部署：回退标签 backup-20260807-before-cloud-reminder；PRD/README/CHANGELOG 已写入 v0.7.0、手机快照协议、默认开启开关和“开启后手机不直推飞书”边界；App 上报/取消、云端 SQLite/HTTPS/重试和隔离联调已通过，v53 签名包已生成；当前仅因 adb devices -l 无设备阻塞真机安装、手机上报联测和截图。
+- 云端提醒已实现并部署：回退标签 backup-20260807-before-cloud-reminder；PRD/README/CHANGELOG 已写入 v0.7.0、手机快照协议、默认开启开关和“开启后手机不直推飞书”边界；已修复云端未来提醒立即发送的到点门闩并热部署，未来提醒门闩测试 GREEN；App 上报/取消、云端 SQLite/HTTPS/重试和隔离联调已通过，v53 签名包已生成；当前仅因 adb devices -l 无设备阻塞真机安装、手机上报联测和截图。

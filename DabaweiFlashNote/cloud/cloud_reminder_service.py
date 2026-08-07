@@ -288,8 +288,9 @@ class ReminderStore:
             row = connection.execute(
                 "SELECT device_id, task_id, task_text, source_path, remind_at_ms, time_zone, attempts "
                 "FROM reminders WHERE status='scheduled' AND next_attempt_at_ms <= ? "
-                "AND remind_at_ms > 0 ORDER BY remind_at_ms ASC LIMIT 1",
-                (timestamp,),
+                "AND remind_at_ms > 0 AND remind_at_ms <= ? "
+                "ORDER BY remind_at_ms ASC LIMIT 1",
+                (timestamp, timestamp),
             ).fetchone()
             if row is None:
                 connection.commit()
