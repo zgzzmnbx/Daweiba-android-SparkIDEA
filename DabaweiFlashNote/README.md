@@ -23,6 +23,7 @@ Android 本地闪念捕捉 App。核心目标是打开即写、下拉保存、�
 - 当前包名：`com.dabawei.flashnote`。
 - 当前产品名：`大尾巴闪念`。
 - 命名说明：`dabawei` 是早期拼写债务，正确拼写应为 `daweiba`；包名修改涉及 Android 数据迁移，暂不贸然调整。
+- 下一版本规划：`0.6.0-shadcn-rhea-ui`，按 shadcn preset `b1au7YYAi` 将全部原生 Android 界面统一为 Rhea / Neutral / Blue 设计语言，收敛为浅色、深色两套视觉主题并支持跟随系统；当前只完成 PRD 与开发任务书，APK 仍为 v0.51。详见 `PRD.md` 7.6 节和 `全量界面重绘开发任务书-【codex】.md`。
 
 ## Git 归档与推送
 

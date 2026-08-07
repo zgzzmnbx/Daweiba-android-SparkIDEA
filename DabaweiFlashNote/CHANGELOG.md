@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 未发布：0.6.0-shadcn-rhea-ui（需求确认于 2026-08-07）
+
+- 已解码并登记 shadcn preset `b1au7YYAi`：Rhea、Neutral、Blue、Inter、Lucide、默认圆角与 subtle 菜单强调。
+- 已在 PRD 7.6 节定义全量原生 Android 界面重绘、浅色/深色语义令牌、旧主题迁移、无障碍和真机截图验收矩阵。
+- 已生成可直接交给开发 Agent 的 `/goal` 任务书；本条为规划记录，尚未修改业务代码、版本号或 APK。
+
 ## 0.51-feishu-reminder-push（2026-08-07）
 
 - 待办提醒触发后，新增异步飞书机器人文本推送。
