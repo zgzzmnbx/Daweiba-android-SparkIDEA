@@ -6,5 +6,5 @@
 - 任务0/1完成：基线锁定；UI 专项测试旧实现 exit=1，修复后 tokens/contrast/migration/touch/masking/XML/IDs exit=0。
 - 任务2完成：双主题、旧偏好迁移、原有 14 个图标已按基线恢复；提醒/同步标签和顶部同步按钮已改为浅色语义组合。
 - 回归完成：五个既有脚本均 exit=0；故障注入 UI 对比度 exit=1，恢复后 exit=0；git diff --check exit=0。
-- 构建/交付完成：v52/0.6.0-shadcn-rhea-ui，签名 v1/v2/v3 全通过；56 个白名单文件已提交 02ed227 并推送 origin/master。
+- 构建/交付：v52/0.6.0-shadcn-rhea-ui，签名 v1/v2/v3 全通过；首轮提交 02ed227，反馈修订提交 24cbc19，均已推送 origin/master。
 - 反馈修订后：v52 新包已构建并签名；重新安装前 vivo V2405A 再次掉线，静态验收继续，真机截图待设备恢复。
