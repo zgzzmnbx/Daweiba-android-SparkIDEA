@@ -4,7 +4,7 @@
 日期：2026-08-07
 适用工程：`DabaweiFlashNote`
 当前 APK：`versionCode=52`，`versionName=0.52-feishu-card-silent-reminder`
-真机状态：代码、纯 Java、资源、APK 构建和签名已验证；2026-08-06 已将 v0.50 安装到 vivo V2405/V2405A，已验证自然语言自动识别、提醒展示、撤销和重启不复活。v0.51 已安装到同一设备，包管理器确认版本为 51，设置页已确认飞书推送默认开启且 webhook 已加载；真实飞书消息到达待新建提醒后补测。
+真机状态：代码、纯 Java、资源、APK 构建和签名已验证；2026-08-06 已将 v0.50 安装到 vivo V2405/V2405A，已验证自然语言自动识别、提醒展示、撤销和重启不复活。v0.51 已安装到同一设备，包管理器确认版本为 51，设置页已确认飞书推送默认开启且 webhook 已加载；v0.52 已构建并通过签名校验，但 vivo 安装返回 `INSTALL_FAILED_ABORTED: User rejected permissions`，待 USB 安装授权后补装和验证。
 
 ## 1. 产品定位
 
