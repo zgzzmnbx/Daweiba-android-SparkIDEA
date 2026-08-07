@@ -48,76 +48,87 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="vertical">
 
             <TextView
                 android:id="@+id/noteTime"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:includeFontPadding="false"
+                android:maxLines="2"
                 android:textColor="@color/muted_foreground"
                 android:textSize="12sp" />
 
-            <TextView
-                android:id="@+id/todoBadge"
-                android:layout_width="wrap_content"
-                android:layout_height="28dp"
-                android:background="@drawable/todo_badge_background"
-                android:gravity="center"
-                android:minWidth="48dp"
-                android:paddingLeft="10dp"
-                android:paddingRight="10dp"
-                android:text="@string/todo_badge"
-                android:textColor="@color/accent_foreground"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/reminderBadge"
-                android:layout_width="wrap_content"
-                android:layout_height="28dp"
-                android:layout_marginLeft="4dp"
-                android:background="@drawable/reminder_badge_background"
-                android:gravity="center"
-                android:maxWidth="132dp"
-                android:paddingLeft="8dp"
-                android:paddingRight="8dp"
-                android:textColor="@color/warning_foreground"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:visibility="gone" />
-
-            <TextView
-                android:id="@+id/syncBadge"
-                android:layout_width="wrap_content"
-                android:layout_height="28dp"
-                android:layout_marginLeft="4dp"
-                android:background="@drawable/synced_badge_background"
-                android:gravity="center"
-                android:minWidth="56dp"
-                android:paddingLeft="10dp"
-                android:paddingRight="10dp"
-                android:text="@string/synced_badge"
-                android:textColor="@color/success_foreground"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <ImageButton
-                android:id="@+id/deleteButton"
-                android:layout_width="48dp"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:layout_marginLeft="2dp"
-                android:background="@android:color/transparent"
-                android:contentDescription="@string/delete_note"
-                android:minWidth="48dp"
-                android:minHeight="48dp"
-                android:padding="12dp"
-                android:scaleType="center"
-                android:src="@drawable/ic_trash" />
+                android:gravity="center_vertical|right"
+                android:orientation="horizontal">
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/todoBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="28dp"
+                    android:background="@drawable/todo_badge_background"
+                    android:gravity="center"
+                    android:minWidth="48dp"
+                    android:paddingLeft="10dp"
+                    android:paddingRight="10dp"
+                    android:text="@string/todo_badge"
+                    android:textColor="@color/accent_foreground"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/reminderBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="28dp"
+                    android:layout_marginLeft="4dp"
+                    android:background="@drawable/reminder_badge_background"
+                    android:gravity="center"
+                    android:maxWidth="132dp"
+                    android:paddingLeft="8dp"
+                    android:paddingRight="8dp"
+                    android:textColor="@color/warning_foreground"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/syncBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="28dp"
+                    android:layout_marginLeft="4dp"
+                    android:background="@drawable/synced_badge_background"
+                    android:gravity="center"
+                    android:minWidth="56dp"
+                    android:paddingLeft="10dp"
+                    android:paddingRight="10dp"
+                    android:text="@string/synced_badge"
+                    android:textColor="@color/success_foreground"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <ImageButton
+                    android:id="@+id/deleteButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginLeft="2dp"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="@string/delete_note"
+                    android:minWidth="48dp"
+                    android:minHeight="48dp"
+                    android:padding="12dp"
+                    android:scaleType="center"
+                    android:src="@drawable/ic_trash" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>
