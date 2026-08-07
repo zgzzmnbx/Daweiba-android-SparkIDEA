@@ -107,7 +107,8 @@ $requiredIds = @(
   "appTitle", "syncStatus", "noteInput", "searchInput", "saveButton", "saveTodoButton", "uploadImageButton", "clipboardButton",
   "recordButton", "noteList", "todoList", "navHome", "navTags", "navStats", "navMine", "navHomeIcon", "navTagsIcon", "navStatsIcon", "navMineIcon",
   "themeSpinner", "claudeFontStyle", "exportButton", "reminderNotificationSettingsButton", "reminderExactSettingsButton",
-  "dailyOverviewEnabled", "dailyOverviewTimeButton", "backgroundSyncEnabled", "lockscreenPrivate", "feishuPushEnabled", "feishuWebhookUrl",
+  "dailyOverviewEnabled", "dailyOverviewTimeButton", "backgroundSyncEnabled", "cloudReminderEnabled", "cloudReminderHelp",
+  "lockscreenPrivate", "feishuPushEnabled", "feishuWebhookUrl",
   "reminderDiagnostics", "refreshReminderDiagnosticsButton", "syncEnabled", "webdavBaseUrl", "webdavUsername", "webdavPassword", "webdavRemotePath", "webdavAnchor",
   "saveSyncSettingsButton", "versionInfo", "quickNoteInput", "quickSaveButton", "widgetTitle", "widgetRecent", "widgetAction", "noteCard", "deleteButton"
 )
@@ -118,7 +119,7 @@ foreach ($id in $requiredIds) {
 $interactiveIds = @(
   "recordButton", "saveButton", "saveTodoButton", "uploadImageButton", "clipboardButton", "quickSaveButton", "exportButton",
   "reminderNotificationSettingsButton", "reminderExactSettingsButton", "dailyOverviewEnabled", "dailyOverviewTimeButton", "backgroundSyncEnabled",
-  "lockscreenPrivate", "feishuPushEnabled", "syncEnabled", "refreshReminderDiagnosticsButton", "saveSyncSettingsButton", "themeSpinner", "deleteButton",
+  "cloudReminderEnabled", "lockscreenPrivate", "feishuPushEnabled", "syncEnabled", "refreshReminderDiagnosticsButton", "saveSyncSettingsButton", "themeSpinner", "deleteButton",
   "navHome", "navTags", "navStats", "navMine", "widgetAction"
 )
 foreach ($id in $interactiveIds) {
@@ -138,6 +139,14 @@ foreach ($secretId in @("webdavPassword", "feishuWebhookUrl")) {
   if (-not $secretMatch.Success -or $secretMatch.Value -notmatch 'textPassword') {
     Fail "sensitive field is not masked by default: $secretId"
   }
+}
+
+$cloudSettingsRaw = Read-Required (Join-Path $javaRoot "CloudReminderSettings.java")
+if ($cloudSettingsRaw -notmatch 'getBoolean\(KEY_ENABLED, true\)') {
+  Fail "cloud reminder switch is not enabled by default"
+}
+if ($cloudSettingsRaw -notmatch 'isReady\(\)') {
+  Fail "cloud reminder settings have no readiness gate"
 }
 
 $legacyIconFiles = @(

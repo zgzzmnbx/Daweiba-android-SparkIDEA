@@ -7,4 +7,4 @@
 - 任务2续修：双主题、旧偏好迁移、原有 14 个图标已按基线恢复；提醒/同步标签和顶部同步按钮已改为浅色语义组合；待办占位与设置安全区/固定底导已修复，加入苹方字体选项。
 - 回归完成：五个既有脚本均 exit=0；故障注入 UI 对比度 exit=1，恢复后 exit=0；git diff --check exit=0。
 - 构建/交付：v52/0.6.0-shadcn-rhea-ui，签名 v1/v2/v3 全通过；首轮提交 02ed227，反馈修订提交 24cbc19，均已推送 origin/master。
-- 真机/消息/布局复测：v52 / 0.6.0-shadcn-rhea-ui 已保留数据安装成功；临时提醒在 16:45 被 AlarmManager 消费并生成待办提醒通知；飞书 Webhook 验收请求返回 HTTP 200 且业务 code=0；临时测试待办已删除，原有记录未改动。时间字段现独占一行、标签和删除按钮另起一行，真机浅色首页目视通过；UI 专项测试 exit=0。ReminderReceiver 当前不记录飞书 Result，详见 BLOCKED.md。
+- 云端提醒已实现并部署：回退标签 backup-20260807-before-cloud-reminder；PRD/README/CHANGELOG 已写入 v0.7.0、手机快照协议、默认开启开关和“开启后手机不直推飞书”边界；App 上报/取消、云端 SQLite/HTTPS/重试和隔离联调已通过，v53 签名包已生成；当前仅因 adb devices -l 无设备阻塞真机安装、手机上报联测和截图。

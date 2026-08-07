@@ -53,6 +53,7 @@ public final class SyncSettingsActivity extends Activity {
     private Switch dailyOverviewEnabled;
     private Button dailyOverviewTimeButton;
     private Switch backgroundSyncEnabled;
+    private Switch cloudReminderEnabled;
     private Switch lockscreenPrivate;
     private Switch feishuPushEnabled;
     private EditText feishuWebhookUrl;
@@ -114,6 +115,7 @@ public final class SyncSettingsActivity extends Activity {
         dailyOverviewEnabled = findViewById(R.id.dailyOverviewEnabled);
         dailyOverviewTimeButton = findViewById(R.id.dailyOverviewTimeButton);
         backgroundSyncEnabled = findViewById(R.id.backgroundSyncEnabled);
+        cloudReminderEnabled = findViewById(R.id.cloudReminderEnabled);
         lockscreenPrivate = findViewById(R.id.lockscreenPrivate);
         feishuPushEnabled = findViewById(R.id.feishuPushEnabled);
         feishuWebhookUrl = findViewById(R.id.feishuWebhookUrl);
@@ -133,6 +135,7 @@ public final class SyncSettingsActivity extends Activity {
         anchor.setText(settings.getAnchor());
         dailyOverviewEnabled.setChecked(ReminderSettings.isDailyOverviewEnabled(this));
         backgroundSyncEnabled.setChecked(ReminderSettings.isBackgroundSyncEnabled(this));
+        cloudReminderEnabled.setChecked(CloudReminderSettings.load(this).isEnabled());
         lockscreenPrivate.setChecked(ReminderSettings.isLockScreenPrivate(this));
         FeishuSettings feishuSettings = FeishuSettings.load(this);
         feishuPushEnabled.setChecked(feishuSettings.isEnabled());
@@ -254,6 +257,41 @@ public final class SyncSettingsActivity extends Activity {
             }
         });
 
+        cloudReminderEnabled.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final boolean checked = cloudReminderEnabled.isChecked();
+                CloudReminderSettings.setEnabled(SyncSettingsActivity.this, checked);
+                refreshReminderDiagnostics();
+                if (!checked) {
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            final CloudReminderClient.Result result = CloudReminderClient.clear(
+                                    SyncSettingsActivity.this);
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    refreshReminderDiagnostics();
+                                    Toast.makeText(
+                                            SyncSettingsActivity.this,
+                                            result.isSuccess()
+                                                    ? "云端提醒已关闭并清理"
+                                                    : "云端提醒已关闭，待下次同步重试清理",
+                                            Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                    }, "cloud-reminder-clear").start();
+                } else {
+                    Toast.makeText(
+                            SyncSettingsActivity.this,
+                            "已开启，下次 WebDAV 同步后登记云端提醒",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
         lockscreenPrivate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -339,6 +377,9 @@ public final class SyncSettingsActivity extends Activity {
         super.onResume();
         if (reminderDiagnostics != null) {
             refreshReminderDiagnostics();
+        }
+        if (cloudReminderEnabled != null) {
+            cloudReminderEnabled.setChecked(CloudReminderSettings.load(this).isEnabled());
         }
         SharedPreferences prefs = getSharedPreferences(THEME_PREFS_NAME, MODE_PRIVATE);
         fontStyle = UiFont.loadPreference(prefs);
@@ -431,7 +472,8 @@ public final class SyncSettingsActivity extends Activity {
         }
         for (int textId : new int[]{
                 R.id.settingsTitle, R.id.themeSelectLabel, R.id.claudeFontStyle, R.id.pingfangFontStyle,
-                R.id.dailyOverviewEnabled, R.id.backgroundSyncEnabled, R.id.lockscreenPrivate,
+                R.id.dailyOverviewEnabled, R.id.backgroundSyncEnabled, R.id.cloudReminderEnabled,
+                R.id.lockscreenPrivate,
                 R.id.feishuPushEnabled, R.id.syncEnabled}) {
             View view = findViewById(textId);
             if (view instanceof TextView) {
@@ -440,7 +482,8 @@ public final class SyncSettingsActivity extends Activity {
         }
         for (int mutedId : new int[]{
                 R.id.settingsSubtitle, R.id.appearanceSection, R.id.reminderSection, R.id.feishuSection,
-                R.id.syncDataSection, R.id.aboutSection, R.id.themeHelp, R.id.fontHelp, R.id.reminderDiagnostics,
+                R.id.syncDataSection, R.id.aboutSection, R.id.themeHelp, R.id.fontHelp, R.id.cloudReminderHelp,
+                R.id.reminderDiagnostics,
                 R.id.feishuHelp, R.id.syncDataHelp, R.id.versionInfo}) {
             View view = findViewById(mutedId);
             if (view instanceof TextView) {
@@ -600,6 +643,12 @@ public final class SyncSettingsActivity extends Activity {
                 ? "已开启（约每6小时）"
                 : "未开启";
         String privacyState = ReminderSettings.isLockScreenPrivate(this) ? "隐藏" : "显示";
+        CloudReminderSettings cloudSettings = CloudReminderSettings.load(this);
+        String cloudState = !cloudSettings.isEnabled()
+                ? "已关闭"
+                : (cloudSettings.shouldUseCloudForTrigger()
+                        ? "已接管提醒"
+                        : (cloudSettings.isReady() ? "待首次同步" : "未配置"));
         FeishuSettings feishuSettings = FeishuSettings.load(this);
         String feishuState = feishuSettings.isReady()
                 ? "已开启"
@@ -611,6 +660,8 @@ public final class SyncSettingsActivity extends Activity {
                 .append("每日概览：").append(overviewState).append('\n')
                 .append("后台同步：").append(backgroundState).append('\n')
                 .append("锁屏内容：").append(privacyState).append('\n')
+                .append("云端飞书：").append(cloudState)
+                .append(" · ").append(CloudReminderSettings.getLastSyncMessage(this)).append('\n')
                 .append("飞书推送：").append(feishuState).append('\n')
                 .append("上次同步：").append(ReminderSettings.formatLastSync(this)).append('\n')
                 .append("已调度提醒：").append(database.getScheduledReminderCount()).append(" 条");

@@ -266,6 +266,9 @@ public final class ReminderReceiver extends BroadcastReceiver {
             Context context,
             final String taskText,
             final long triggeredAt) {
+        if (CloudReminderSettings.load(context).isEnabled()) {
+            return;
+        }
         final FeishuSettings settings = FeishuSettings.load(context);
         if (!settings.isReady()) {
             return;

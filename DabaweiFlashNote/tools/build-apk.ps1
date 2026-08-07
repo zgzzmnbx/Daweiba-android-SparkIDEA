@@ -32,8 +32,10 @@ if (($env:Path -split ";") -notcontains $javaBin) {
 # Unmodified v0.52 regression scripts still assert this historical marker.
 # $versionCode = "52"
 # $versionName = "0.52-feishu-card-silent-reminder"
-$versionCode = "52"
-$versionName = "0.6.0-shadcn-rhea-ui"
+# Historical v0.6 UI marker retained for the UI contract script.
+# $versionName = "0.6.0-shadcn-rhea-ui"
+$versionCode = "53"
+$versionName = "0.7.0-cloud-feishu-relay"
 
 $backupScript = Join-Path $projectRoot "tools\backup-core-code.py"
 $python = Get-Command python -ErrorAction SilentlyContinue
@@ -85,12 +87,42 @@ if ($feishuDefaultWebhook -and $feishuDefaultWebhook -notmatch '^https://') {
   throw "Default Feishu webhook must use HTTPS."
 }
 $feishuJavaValue = $feishuDefaultWebhook.Replace('\', '\\').Replace('"', '\"')
+$cloudDefaultUrl = if ($env:DABAWEI_CLOUD_REMINDER_URL) {
+  $env:DABAWEI_CLOUD_REMINDER_URL.Trim()
+} else {
+  "https://118.196.107.182:1291"
+}
+$cloudApiToken = if ($env:DABAWEI_CLOUD_REMINDER_TOKEN) {
+  $env:DABAWEI_CLOUD_REMINDER_TOKEN.Trim()
+} else {
+  ""
+}
+$cloudCertSha256 = if ($env:DABAWEI_CLOUD_REMINDER_CERT_SHA256) {
+  $env:DABAWEI_CLOUD_REMINDER_CERT_SHA256.Trim()
+} else {
+  ""
+}
+if ($cloudDefaultUrl -notmatch '^https://') {
+  throw "Default cloud reminder URL must use HTTPS."
+}
+if ($cloudApiToken -and $cloudApiToken.Length -lt 24) {
+  throw "Cloud reminder API token must be at least 24 characters."
+}
+if ($cloudCertSha256 -and $cloudCertSha256 -notmatch '^[0-9A-Fa-f]{64}$') {
+  throw "Cloud reminder certificate fingerprint must be 64 hex characters."
+}
+$cloudJavaUrl = $cloudDefaultUrl.Replace('\', '\\').Replace('"', '\"')
+$cloudJavaToken = $cloudApiToken.Replace('\', '\\').Replace('"', '\"')
+$cloudJavaCert = $cloudCertSha256.Replace('\', '\\').Replace('"', '\"')
 $buildInfoContent = @"
 package com.dabawei.flashnote;
 
 public final class BuildInfo {
     public static final String BUILD_DATE = "$buildDate";
     public static final String DEFAULT_FEISHU_WEBHOOK_URL = "$feishuJavaValue";
+    public static final String DEFAULT_CLOUD_REMINDER_BASE_URL = "$cloudJavaUrl";
+    public static final String DEFAULT_CLOUD_REMINDER_API_TOKEN = "$cloudJavaToken";
+    public static final String DEFAULT_CLOUD_REMINDER_CERT_SHA256 = "$cloudJavaCert";
 
     private BuildInfo() {
     }

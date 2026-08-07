@@ -65,6 +65,8 @@
     <string name="p1_daily_overview">每日待办概览</string>
     <string name="p1_daily_overview_time">每日概览时间：%1$02d:%2$02d</string>
     <string name="p1_background_sync">低频后台同步（约每6小时）</string>
+    <string name="cloud_reminder_enabled">云端发送飞书提醒</string>
+    <string name="cloud_reminder_help">开启后，手机只登记 WebDAV 待办和本地提醒，飞书消息由云端定时发送；关闭后恢复手机直推。</string>
     <string name="p1_lock_screen_private">锁屏隐藏待办内容</string>
     <string name="p1_reminder_diagnostics">提醒诊断</string>
     <string name="p1_refresh_diagnostics">刷新提醒诊断</string>

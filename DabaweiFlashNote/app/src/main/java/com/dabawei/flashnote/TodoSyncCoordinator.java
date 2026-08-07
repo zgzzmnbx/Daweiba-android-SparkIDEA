@@ -27,6 +27,7 @@ public final class TodoSyncCoordinator {
                 result.getItems(),
                 now,
                 scheduler);
+        CloudReminderClient.reconcile(context, database, result.getItems());
         ReminderSettings.recordSyncSuccess(context, now, result.getItems().size());
         return SyncResult.success(result.getItems(), summary);
     }

@@ -1,0 +1,23 @@
+[Unit]
+Description=Dabawei FlashNote cloud Feishu reminder relay
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=dabawei-cloud
+Group=dabawei-cloud
+WorkingDirectory=/opt/dabawei-cloud-reminder
+ExecStart=/usr/bin/python3 /opt/dabawei-cloud-reminder/cloud_reminder_service.py
+EnvironmentFile=/etc/dabawei-cloud-reminder.env
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/dabawei-cloud-reminder
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+[Install]
+WantedBy=multi-user.target

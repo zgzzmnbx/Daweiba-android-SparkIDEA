@@ -171,6 +171,27 @@
                 android:textSize="14sp" />
 
             <Switch
+                android:id="@+id/cloudReminderEnabled"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:minHeight="48dp"
+                android:text="@string/cloud_reminder_enabled"
+                android:textColor="@color/foreground"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/cloudReminderHelp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="4dp"
+                android:layout_marginRight="4dp"
+                android:layout_marginBottom="6dp"
+                android:lineSpacingExtra="2dp"
+                android:text="@string/cloud_reminder_help"
+                android:textColor="@color/muted_foreground"
+                android:textSize="12sp" />
+
+            <Switch
                 android:id="@+id/lockscreenPrivate"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
