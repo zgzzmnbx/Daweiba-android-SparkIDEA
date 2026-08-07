@@ -3,6 +3,7 @@ package com.dabawei.flashnote;
 public final class FeishuWebhookTest {
     public static void main(String[] args) {
         buildsEscapedTextPayload();
+        buildsReminderCardPayload();
         validatesHttpsWebhookOnly();
         System.out.println("Feishu webhook tests passed.");
     }
@@ -13,6 +14,16 @@ public final class FeishuWebhookTest {
                 "{\"msg_type\":\"text\",\"content\":{\"text\":\"line1\\n\\\"quoted\\\"\\\\tail\"}}",
                 payload,
                 "escaped text payload");
+    }
+
+    private static void buildsReminderCardPayload() {
+        String payload = FeishuWebhookClient.buildReminderCardPayload(
+                "整理\"报告\"", "2026-08-07 10:00");
+        assertTrue(payload.contains("\"msg_type\":\"interactive\""), "interactive card type");
+        assertTrue(payload.contains("\"schema\":\"2.0\""), "card schema");
+        assertTrue(payload.contains("\"tag\":\"markdown\""), "markdown body");
+        assertTrue(payload.contains("整理\\\"报告\\\""), "escaped task text");
+        assertTrue(payload.contains("大尾巴闪念.手机端"), "mobile source");
     }
 
     private static void validatesHttpsWebhookOnly() {

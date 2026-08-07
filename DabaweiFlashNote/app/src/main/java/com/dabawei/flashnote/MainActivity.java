@@ -541,22 +541,10 @@ public class MainActivity extends Activity {
                 true)) {
             return;
         }
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.p1_natural_time_title)
-                .setMessage(getString(R.string.p1_natural_time_auto_message, candidate.getDisplayTime()))
-                .setNegativeButton(R.string.p1_natural_time_undo, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        cancelReminder(target);
-                    }
-                })
-                .setPositiveButton(R.string.p1_natural_time_modify, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        showReminderPicker(target);
-                    }
-                })
-                .show();
+        Toast.makeText(
+                this,
+                getString(R.string.p1_natural_time_scheduled, candidate.getDisplayTime()),
+                Toast.LENGTH_SHORT).show();
         requestReminderPermissions();
     }
 

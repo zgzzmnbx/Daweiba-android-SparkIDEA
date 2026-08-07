@@ -68,17 +68,17 @@ foreach ($marker in @("FeishuSettings.load", "FeishuSettings.save", "feishuPushE
 foreach ($marker in @("DEFAULT_FEISHU_WEBHOOK_URL", "isReady", "isValidWebhookUrl")) {
   if ($settingsModel -notmatch [regex]::Escape($marker)) { throw "Missing Feishu model marker: $marker" }
 }
-foreach ($marker in @("sendFeishuReminder", "FeishuWebhookClient.send", "goAsync")) {
+foreach ($marker in @("sendFeishuReminder", "FeishuWebhookClient.sendReminderCard", "goAsync")) {
   if ($receiver -notmatch [regex]::Escape($marker)) { throw "Missing Feishu receiver marker: $marker" }
 }
-foreach ($marker in @("buildTextPayload", "HttpURLConnection", "Content-Type")) {
+foreach ($marker in @("buildTextPayload", "buildReminderCardPayload", "sendReminderCard", "REMINDER_SOURCE", "schema", "interactive", "HttpURLConnection", "Content-Type")) {
   if ($client -notmatch [regex]::Escape($marker)) { throw "Missing Feishu client marker: $marker" }
 }
 if ($buildInfo -notmatch "DEFAULT_FEISHU_WEBHOOK_URL") {
   throw "BuildInfo must expose the generated Feishu default setting."
 }
-if ($build -notmatch '\$versionCode\s*=\s*"51"' -or $build -notmatch '\$versionName\s*=\s*"0\.51-feishu-reminder-push"') {
-  throw "Build version is not 51 / 0.51-feishu-reminder-push"
+if ($build -notmatch '\$versionCode\s*=\s*"52"' -or $build -notmatch '\$versionName\s*=\s*"0\.52-feishu-card-silent-reminder"') {
+  throw "Build version is not 52 / 0.52-feishu-card-silent-reminder"
 }
 foreach ($marker in @("feishu-webhook-default.txt", "DABAWEI_FEISHU_WEBHOOK", "DEFAULT_FEISHU_WEBHOOK_URL")) {
   if ($build -notmatch [regex]::Escape($marker)) { throw "Build missing Feishu default marker: $marker" }

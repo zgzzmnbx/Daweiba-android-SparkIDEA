@@ -72,13 +72,10 @@
     <string name="feishu_webhook_help">默认已配置；可替换为自己的飞书机器人地址。飞书网络失败不影响手机本地提醒。</string>
     <string name="feishu_webhook_invalid">飞书 Webhook 地址必须是有效的 HTTPS 地址</string>
     <string name="p1_natural_time_title">识别到提醒时间</string>
+    <string name="p1_natural_time_scheduled">已自动设置提醒：%1$s</string>
     <string name="p1_natural_time_message">已识别：%1$s
 原文保留不变，是否设置提醒？</string>
     <string name="p1_natural_time_confirm">设置提醒</string>
-    <string name="p1_natural_time_auto_message">已自动设置提醒：%1$s
-原文保留不变，可撤销或修改。</string>
-    <string name="p1_natural_time_undo">撤销自动提醒</string>
-    <string name="p1_natural_time_modify">修改提醒</string>
     <string name="p1_natural_time_conflict">发现多个时间，请选择一个提醒时间。</string>
     <string name="p1_multi_reminder">多级提醒</string>
     <string name="p1_multi_reminder_need_due">设置多级提醒需要截止日期</string>

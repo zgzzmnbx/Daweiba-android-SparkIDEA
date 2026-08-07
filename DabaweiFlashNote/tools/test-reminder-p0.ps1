@@ -106,8 +106,8 @@ foreach ($marker in @(
   }
 }
 
-if ($build -notmatch '\$versionCode\s*=\s*"51"' -or $build -notmatch '\$versionName\s*=\s*"0\.51-feishu-reminder-push"') {
-  throw "Build version is not 51 / 0.51-feishu-reminder-push"
+if ($build -notmatch '\$versionCode\s*=\s*"52"' -or $build -notmatch '\$versionName\s*=\s*"0\.52-feishu-card-silent-reminder"') {
+  throw "Build version is not 52 / 0.52-feishu-card-silent-reminder"
 }
 
 Write-Output "Reminder P0 static test passed."

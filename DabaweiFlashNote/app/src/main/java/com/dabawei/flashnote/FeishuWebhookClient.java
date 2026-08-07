@@ -12,6 +12,7 @@ public final class FeishuWebhookClient {
     private static final Charset UTF_8 = Charset.forName("UTF-8");
     private static final int CONNECT_TIMEOUT_MILLIS = 5000;
     private static final int READ_TIMEOUT_MILLIS = 5000;
+    private static final String REMINDER_SOURCE = "大尾巴闪念.手机端";
 
     private FeishuWebhookClient() {
     }
@@ -36,11 +37,49 @@ public final class FeishuWebhookClient {
                 + "\"}}";
     }
 
+    public static String buildReminderCardPayload(String taskText, String reminderTime) {
+        String body = "📝 **待办内容**\\n"
+                + safeText(taskText, "未填写待办内容")
+                + "\\n\\n⏰ **提醒时间**\\n"
+                + safeText(reminderTime, "未记录")
+                + "\\n\\n📱 **来源**\\n"
+                + REMINDER_SOURCE;
+        return "{\"msg_type\":\"interactive\",\"card\":{"
+                + "\"schema\":\"2.0\","
+                + "\"config\":{\"update_multi\":true},"
+                + "\"body\":{"
+                + "\"direction\":\"vertical\","
+                + "\"padding\":\"12px 12px 12px 12px\","
+                + "\"elements\":[{"
+                + "\"tag\":\"markdown\","
+                + "\"content\":\"" + escapeJson(body) + "\","
+                + "\"text_align\":\"left\","
+                + "\"text_size\":\"normal_v2\","
+                + "\"margin\":\"0px 0px 0px 0px\""
+                + "}]},"
+                + "\"header\":{"
+                + "\"title\":{\"tag\":\"plain_text\",\"content\":\"大尾巴闪念\"},"
+                + "\"subtitle\":{\"tag\":\"plain_text\",\"content\":\"手机端 · 待办提醒\"},"
+                + "\"template\":\"blue\","
+                + "\"padding\":\"12px 12px 12px 12px\""
+                + "}}}";
+    }
+
     public static Result send(String webhookUrl, String text) {
         if (!isValidWebhookUrl(webhookUrl)) {
             return Result.failed("飞书 Webhook 地址不可用");
         }
+        return sendPayload(webhookUrl, buildTextPayload(text));
+    }
 
+    public static Result sendReminderCard(String webhookUrl, String taskText, String reminderTime) {
+        if (!isValidWebhookUrl(webhookUrl)) {
+            return Result.failed("飞书 Webhook 地址不可用");
+        }
+        return sendPayload(webhookUrl, buildReminderCardPayload(taskText, reminderTime));
+    }
+
+    private static Result sendPayload(String webhookUrl, String payload) {
         HttpURLConnection connection = null;
         try {
             URL url = new URL(webhookUrl.trim());
@@ -51,7 +90,7 @@ public final class FeishuWebhookClient {
             connection.setDoInput(true);
             connection.setDoOutput(true);
             connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-            byte[] body = buildTextPayload(text).getBytes(UTF_8);
+            byte[] body = payload.getBytes(UTF_8);
             connection.setFixedLengthStreamingMode(body.length);
             OutputStream output = connection.getOutputStream();
             try {
@@ -83,6 +122,13 @@ public final class FeishuWebhookClient {
                 connection.disconnect();
             }
         }
+    }
+
+    private static String safeText(String value, String fallback) {
+        if (value == null || value.trim().length() == 0) {
+            return fallback;
+        }
+        return value.trim();
     }
 
     private static String readResponse(InputStream stream) throws Exception {

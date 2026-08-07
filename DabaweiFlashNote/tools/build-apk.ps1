@@ -29,8 +29,8 @@ if (($env:Path -split ";") -notcontains $javaBin) {
   $env:Path = $javaBin + ";" + $env:Path
 }
 
-$versionCode = "51"
-$versionName = "0.51-feishu-reminder-push"
+$versionCode = "52"
+$versionName = "0.52-feishu-card-silent-reminder"
 
 $backupScript = Join-Path $projectRoot "tools\backup-core-code.py"
 $python = Get-Command python -ErrorAction SilentlyContinue

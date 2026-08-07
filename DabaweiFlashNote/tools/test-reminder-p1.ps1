@@ -85,9 +85,7 @@ foreach ($resource in @(
   "p1_lock_screen_private",
   "p1_reminder_diagnostics",
   "p1_natural_time_title",
-  "p1_natural_time_auto_message",
-  "p1_natural_time_undo",
-  "p1_natural_time_modify",
+  "p1_natural_time_scheduled",
   "p1_natural_time_conflict",
   "p1_multi_reminder",
   "p1_day_before",
@@ -144,8 +142,8 @@ foreach ($marker in @(
   "NaturalLanguageReminderParser.parse",
   "NaturalLanguageReminderParser.parseResult",
   "saveAutomaticReminder",
-  "p1_natural_time_undo",
-  "p1_natural_time_modify",
+  "p1_natural_time_scheduled",
+  "requestReminderPermissions",
   "showPreAlertPicker",
   "savePreAlerts",
   "PRE_ALERTS"
@@ -165,8 +163,12 @@ foreach ($marker in @(
   }
 }
 
-if ($build -notmatch '\$versionCode\s*=\s*"51"' -or $build -notmatch '\$versionName\s*=\s*"0\.51-feishu-reminder-push"') {
-  throw "Build version is not 51 / 0.51-feishu-reminder-push"
+if ($mainActivity -match 'p1_natural_time_auto_message|p1_natural_time_undo|p1_natural_time_modify') {
+  throw "Automatic reminder flow must not show the removed confirmation dialog"
+}
+
+if ($build -notmatch '\$versionCode\s*=\s*"52"' -or $build -notmatch '\$versionName\s*=\s*"0\.52-feishu-card-silent-reminder"') {
+  throw "Build version is not 52 / 0.52-feishu-card-silent-reminder"
 }
 
 Write-Output "Reminder P1 pure-Java and static tests passed."
