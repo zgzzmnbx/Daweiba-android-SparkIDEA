@@ -165,8 +165,8 @@ foreach ($marker in @(
   }
 }
 
-if ($build -notmatch '\$versionCode\s*=\s*"50"' -or $build -notmatch '\$versionName\s*=\s*"0\.50-auto-natural-reminders"') {
-  throw "Build version is not 50 / 0.50-auto-natural-reminders"
+if ($build -notmatch '\$versionCode\s*=\s*"51"' -or $build -notmatch '\$versionName\s*=\s*"0\.51-feishu-reminder-push"') {
+  throw "Build version is not 51 / 0.51-feishu-reminder-push"
 }
 
 Write-Output "Reminder P1 pure-Java and static tests passed."

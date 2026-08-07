@@ -66,6 +66,11 @@
     <string name="p1_lock_screen_private">锁屏隐藏待办内容</string>
     <string name="p1_reminder_diagnostics">提醒诊断</string>
     <string name="p1_refresh_diagnostics">刷新提醒诊断</string>
+    <string name="feishu_push_title">飞书待办提醒</string>
+    <string name="feishu_push_enabled">待办提醒同时推送到飞书</string>
+    <string name="feishu_webhook_hint">飞书机器人 Webhook 地址（HTTPS）</string>
+    <string name="feishu_webhook_help">默认已配置；可替换为自己的飞书机器人地址。飞书网络失败不影响手机本地提醒。</string>
+    <string name="feishu_webhook_invalid">飞书 Webhook 地址必须是有效的 HTTPS 地址</string>
     <string name="p1_natural_time_title">识别到提醒时间</string>
     <string name="p1_natural_time_message">已识别：%1$s
 原文保留不变，是否设置提醒？</string>
@@ -112,7 +117,7 @@
     <string name="save_settings">保存设置</string>
     <string name="app_version_info">版本：%1$s (%2$d)\n构建日期：%3$s</string>
     <string name="sync_pending_now">立即同步待同步</string>
-    <string name="settings_saved">同步设置已保存</string>
+    <string name="settings_saved">设置已保存</string>
     <string name="sync_no_pending">没有待同步闪念</string>
     <string name="sync_batch_success">已同步 %1$d 条闪念</string>
     <string name="sync_queued">已保存，本条将尝试同步</string>

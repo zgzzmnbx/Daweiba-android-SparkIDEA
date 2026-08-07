@@ -29,8 +29,8 @@ if (($env:Path -split ";") -notcontains $javaBin) {
   $env:Path = $javaBin + ";" + $env:Path
 }
 
-$versionCode = "50"
-$versionName = "0.50-auto-natural-reminders"
+$versionCode = "51"
+$versionName = "0.51-feishu-reminder-push"
 
 $backupScript = Join-Path $projectRoot "tools\backup-core-code.py"
 $python = Get-Command python -ErrorAction SilentlyContinue
@@ -63,23 +63,38 @@ New-Item -ItemType Directory -Force -Path $compiledDir, $generatedDir, $classesD
 $manifest = Join-Path $projectRoot "app\src\main\AndroidManifest.xml"
 $resDir = Join-Path $projectRoot "app\src\main\res"
 $sourceDir = Join-Path $projectRoot "app\src\main\java"
-$buildInfoPath = Join-Path $sourceDir "com\dabawei\flashnote\BuildInfo.java"
+$buildInfoPath = Join-Path $generatedDir "com\dabawei\flashnote\BuildInfo.java"
 $unsignedApk = Join-Path $intermediatesDir "DabaweiFlashNote-unsigned.apk"
 $dexedApk = Join-Path $intermediatesDir "DabaweiFlashNote-dexed.apk"
 $alignedApk = Join-Path $intermediatesDir "DabaweiFlashNote-aligned.apk"
 $signedApk = Join-Path $outputsDir "DabaweiFlashNote-debug.apk"
 
 $buildDate = Get-Date -Format "yyyy-MM-dd HH:mm"
+$feishuDefaultPath = Join-Path $projectRoot "..\Codex-Temp\feishu-webhook-default.txt"
+$feishuDefaultWebhook = ""
+if (Test-Path -LiteralPath $feishuDefaultPath) {
+  $feishuDefaultWebhook = (Get-Content -LiteralPath $feishuDefaultPath -Raw -Encoding UTF8).Trim()
+}
+if (-not $feishuDefaultWebhook -and $env:DABAWEI_FEISHU_WEBHOOK) {
+  $feishuDefaultWebhook = $env:DABAWEI_FEISHU_WEBHOOK.Trim()
+}
+if ($feishuDefaultWebhook -and $feishuDefaultWebhook -notmatch '^https://') {
+  throw "Default Feishu webhook must use HTTPS."
+}
+$feishuJavaValue = $feishuDefaultWebhook.Replace('\', '\\').Replace('"', '\"')
 $buildInfoContent = @"
 package com.dabawei.flashnote;
 
 public final class BuildInfo {
     public static final String BUILD_DATE = "$buildDate";
+    public static final String DEFAULT_FEISHU_WEBHOOK_URL = "$feishuJavaValue";
 
     private BuildInfo() {
     }
 }
 "@
+$buildInfoParent = Split-Path -Parent $buildInfoPath
+New-Item -ItemType Directory -Force -Path $buildInfoParent | Out-Null
 [System.IO.File]::WriteAllText($buildInfoPath, $buildInfoContent, [System.Text.UTF8Encoding]::new($false))
 
 & $aapt2 compile --dir $resDir -o $compiledDir
@@ -107,7 +122,9 @@ foreach ($resource in $compiledResources) {
 if ($LASTEXITCODE -ne 0) { throw "aapt2 link failed" }
 
 $javaFiles = @()
-$javaFiles += Get-ChildItem -LiteralPath $sourceDir -Filter "*.java" -Recurse | ForEach-Object { $_.FullName }
+$javaFiles += Get-ChildItem -LiteralPath $sourceDir -Filter "*.java" -Recurse |
+  Where-Object { $_.Name -ne "BuildInfo.java" } |
+  ForEach-Object { $_.FullName }
 $javaFiles += Get-ChildItem -LiteralPath $generatedDir -Filter "*.java" -Recurse | ForEach-Object { $_.FullName }
 if (-not $javaFiles) { throw "No Java files found" }
 

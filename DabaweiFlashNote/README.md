@@ -12,10 +12,11 @@ Android 本地闪念捕捉 App。核心目标是打开即写、下拉保存、�
 
 ## 当前状态
 
-- 当前 APK：`versionCode=50`，`versionName=0.50-auto-natural-reminders`。
-- 当前 P0/P1/P1.1：已完成待办提醒协议、SQLite 对账、单次与多级本地调度、每日待办概览、低频后台同步、统一自然语言自动提醒、Obsidian 待办稳定基准、防漂移/防复活、撤销/修改反馈、冲突时间提示、通知隐私策略、提醒诊断、重启/时间变化恢复和权限降级提示。
+- 当前 APK：`versionCode=51`，`versionName=0.51-feishu-reminder-push`。
+- 当前 P0/P1/P1.1/P1.2：已完成待办提醒协议、SQLite 对账、单次与多级本地调度、每日待办概览、低频后台同步、统一自然语言自动提醒、Obsidian 待办稳定基准、防漂移/防复活、撤销/修改反馈、冲突时间提示、通知隐私策略、提醒诊断、重启/时间变化恢复、权限降级提示，以及待办提醒同步推送到可配置的飞书机器人。
 - 自然语言自动提醒仅作用于 App 待办和同步进入手机的 Obsidian 未完成待办；日期无具体时分默认 08:00，相对分钟/小时按稳定基准精确顺延。下一开发目标转为 P2 规划，需求以 `PRD.md` 7.5 为准。
 - 真机验证状态（2026-08-06）：已通过 ADB 将 v0.50 APK 安装到 vivo V2405/V2405A，包管理器确认 `versionCode=50`、`versionName=0.50-auto-natural-reminders` 并成功启动；已现场验证本地待办自然语言自动识别、提醒展示和“撤销自动提醒”，撤销后重启 App 未复活。随后手机在通话状态下断开 ADB，2 分钟到点通知、1 小时、三天默认 08:00、Obsidian 同步及锁屏/息屏/重启等场景仍待设备重新连接后补测。
+- 飞书推送（2026-08-07）：v0.51 已完成纯 Java 测试、静态检查、APK 构建和签名校验；首次设置默认启用，用户可在设置页关闭或替换 HTTPS webhook。默认地址仅作为工作区外的本地构建输入注入 APK，不进入 Git 备份；v0.51 已安装到 vivo V2405/V2405A，包管理器确认版本为 51，设置页已确认飞书开关默认开启且 webhook 已加载。真实飞书消息到达仍需新建一条提醒后现场确认。
 - P1 后台同步默认关闭，开启后由 JobScheduler 约每 6 小时尽力执行；已保存到手机的提醒不依赖后台同步。
 - Obsidian 待办同步插件：`v1.3.0`；原始任务笔记不做批量回写，仅更新单一同步文件。
 - 当前技术栈：原生 Android XML + Java，手工 Android SDK 构建。
@@ -55,6 +56,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\test-hello.ps1
 powershell -ExecutionPolicy Bypass -File .\tools\test-markdown-exporter.ps1
 powershell -ExecutionPolicy Bypass -File .\tools\test-reminder-p0.ps1
 powershell -ExecutionPolicy Bypass -File .\tools\test-reminder-p1.ps1
+powershell -ExecutionPolicy Bypass -File .\tools\test-feishu.ps1
 ```
 
 ## 安装到真机

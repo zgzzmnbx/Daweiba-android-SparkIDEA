@@ -85,6 +85,7 @@ public final class ReminderReceiver extends BroadcastReceiver {
                     targetAt,
                     ReminderScheduler.buildSnoozePendingIntent(context, fired, 10),
                     ReminderScheduler.buildSnoozePendingIntent(context, fired, 60));
+            sendFeishuReminder(context, fired.getTaskText(), fired.getSourcePath(), targetAt);
         } finally {
             database.close();
         }
@@ -125,6 +126,7 @@ public final class ReminderReceiver extends BroadcastReceiver {
                     targetAt,
                     ReminderScheduler.buildSnoozePendingIntent(context, fired, 10),
                     ReminderScheduler.buildSnoozePendingIntent(context, fired, 60));
+            sendFeishuReminder(context, parent.getTaskText(), parent.getSourcePath(), targetAt);
         } finally {
             database.close();
         }
@@ -258,6 +260,36 @@ public final class ReminderReceiver extends BroadcastReceiver {
                 ? 10
                 : intent.getIntExtra(ReminderScheduler.EXTRA_SNOOZE_MINUTES, 10);
         return minutes == 60 ? 60 : 10;
+    }
+
+    private void sendFeishuReminder(
+            Context context,
+            final String taskText,
+            final String sourcePath,
+            final long triggeredAt) {
+        final FeishuSettings settings = FeishuSettings.load(context);
+        if (!settings.isReady()) {
+            return;
+        }
+        final PendingResult pendingResult = goAsync();
+        final String message = buildFeishuMessage(taskText, sourcePath, triggeredAt);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    FeishuWebhookClient.send(settings.getWebhookUrl(), message);
+                } finally {
+                    pendingResult.finish();
+                }
+            }
+        }, "dabawei-feishu-reminder").start();
+    }
+
+    private String buildFeishuMessage(String taskText, String sourcePath, long triggeredAt) {
+        return "大尾巴闪念 · 待办提醒\n"
+                + "内容：" + (taskText == null ? "" : taskText) + "\n"
+                + "提醒时间：" + TodoDateTime.format(triggeredAt) + "\n"
+                + "来源：《" + displaySource(sourcePath) + "》";
     }
 
     private long getOccurrenceId(Intent intent) {

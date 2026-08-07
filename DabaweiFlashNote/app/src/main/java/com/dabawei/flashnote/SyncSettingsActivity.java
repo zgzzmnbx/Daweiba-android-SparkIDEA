@@ -44,6 +44,8 @@ public final class SyncSettingsActivity extends Activity {
     private Button dailyOverviewTimeButton;
     private CheckBox backgroundSyncEnabled;
     private CheckBox lockscreenPrivate;
+    private CheckBox feishuPushEnabled;
+    private EditText feishuWebhookUrl;
     private TextView reminderDiagnostics;
     private ThemePalette currentTheme;
 
@@ -72,6 +74,8 @@ public final class SyncSettingsActivity extends Activity {
         dailyOverviewTimeButton = findViewById(R.id.dailyOverviewTimeButton);
         backgroundSyncEnabled = findViewById(R.id.backgroundSyncEnabled);
         lockscreenPrivate = findViewById(R.id.lockscreenPrivate);
+        feishuPushEnabled = findViewById(R.id.feishuPushEnabled);
+        feishuWebhookUrl = findViewById(R.id.feishuWebhookUrl);
         reminderDiagnostics = findViewById(R.id.reminderDiagnostics);
         Button refreshReminderDiagnostics = findViewById(R.id.refreshReminderDiagnosticsButton);
         TextView versionInfo = findViewById(R.id.versionInfo);
@@ -87,6 +91,9 @@ public final class SyncSettingsActivity extends Activity {
         dailyOverviewEnabled.setChecked(ReminderSettings.isDailyOverviewEnabled(this));
         backgroundSyncEnabled.setChecked(ReminderSettings.isBackgroundSyncEnabled(this));
         lockscreenPrivate.setChecked(ReminderSettings.isLockScreenPrivate(this));
+        FeishuSettings feishuSettings = FeishuSettings.load(this);
+        feishuPushEnabled.setChecked(feishuSettings.isEnabled());
+        feishuWebhookUrl.setText(feishuSettings.getWebhookUrl());
         updateDailyOverviewTimeLabel();
         refreshReminderDiagnostics();
 
@@ -213,6 +220,14 @@ public final class SyncSettingsActivity extends Activity {
         save.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                String webhookUrl = feishuWebhookUrl.getText().toString().trim();
+                if (feishuPushEnabled.isChecked() && !FeishuSettings.isValidWebhookUrl(webhookUrl)) {
+                    Toast.makeText(
+                            SyncSettingsActivity.this,
+                            R.string.feishu_webhook_invalid,
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 SyncSettings.save(
                         SyncSettingsActivity.this,
                         enabled.isChecked(),
@@ -221,6 +236,10 @@ public final class SyncSettingsActivity extends Activity {
                         password.getText().toString(),
                         remotePath.getText().toString(),
                         anchor.getText().toString());
+                FeishuSettings.save(
+                        SyncSettingsActivity.this,
+                        feishuPushEnabled.isChecked(),
+                        webhookUrl);
                 BackgroundSyncScheduler.ensureScheduled(SyncSettingsActivity.this);
                 new ReminderScheduler(SyncSettingsActivity.this, database).rescheduleDailyOverview();
                 Toast.makeText(SyncSettingsActivity.this, R.string.settings_saved, Toast.LENGTH_SHORT).show();
@@ -270,6 +289,10 @@ public final class SyncSettingsActivity extends Activity {
                 ? "已开启（约每6小时）"
                 : "未开启";
         String privacyState = ReminderSettings.isLockScreenPrivate(this) ? "隐藏" : "显示";
+        FeishuSettings feishuSettings = FeishuSettings.load(this);
+        String feishuState = feishuSettings.isReady()
+                ? "已开启"
+                : (feishuSettings.isEnabled() ? "已开启但地址无效" : "未开启");
         StringBuilder builder = new StringBuilder();
         builder.append(getString(R.string.p1_reminder_diagnostics)).append('\n')
                 .append("通知权限：").append(notificationState).append('\n')
@@ -277,6 +300,7 @@ public final class SyncSettingsActivity extends Activity {
                 .append("每日概览：").append(overviewState).append('\n')
                 .append("后台同步：").append(backgroundState).append('\n')
                 .append("锁屏内容：").append(privacyState).append('\n')
+                .append("飞书推送：").append(feishuState).append('\n')
                 .append("上次同步：").append(ReminderSettings.formatLastSync(this)).append('\n')
                 .append("已调度提醒：").append(database.getScheduledReminderCount()).append(" 条");
         reminderDiagnostics.setText(builder.toString());

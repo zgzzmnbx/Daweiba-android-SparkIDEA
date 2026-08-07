@@ -109,6 +109,45 @@
             android:textSize="16sp" />
 
         <TextView
+            android:layout_width="match_parent"
+            android:layout_height="28dp"
+            android:layout_marginTop="12dp"
+            android:gravity="bottom"
+            android:text="@string/feishu_push_title"
+            android:textColor="@color/secondary_text"
+            android:textSize="14sp" />
+
+        <CheckBox
+            android:id="@+id/feishuPushEnabled"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="@string/feishu_push_enabled"
+            android:textColor="@color/primary_text"
+            android:textSize="16sp" />
+
+        <EditText
+            android:id="@+id/feishuWebhookUrl"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/input_background"
+            android:hint="@string/feishu_webhook_hint"
+            android:inputType="textUri"
+            android:padding="12dp"
+            android:singleLine="true"
+            android:textColor="@color/primary_text"
+            android:textColorHint="@color/secondary_text" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:lineSpacingExtra="2dp"
+            android:text="@string/feishu_webhook_help"
+            android:textColor="@color/secondary_text"
+            android:textSize="12sp" />
+
+        <TextView
             android:id="@+id/reminderDiagnostics"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
