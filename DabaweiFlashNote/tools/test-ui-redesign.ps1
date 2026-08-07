@@ -207,8 +207,24 @@ if ($mainRaw -notmatch 'reminderParams\s*=\s*new LinearLayout\.LayoutParams\(\s*
 }
 
 $buildRaw = Read-Required (Join-Path $projectRoot "tools\build-apk.ps1")
-if (-not $buildRaw.Contains('$versionCode = "52"') -or -not $buildRaw.Contains('$versionName = "0.6.0-shadcn-rhea-ui"')) {
-  Fail "build script is not v52 / 0.6.0-shadcn-rhea-ui"
+if (-not $buildRaw.Contains('$versionCode = "54"') -or -not $buildRaw.Contains('$versionName = "0.7.1-cloud-startup-validation"')) {
+  Fail "build script is not v54 / 0.7.1-cloud-startup-validation"
+}
+
+if (-not [regex]::IsMatch($mainRaw, '(?s)private void syncTodoItems\(\)\s*\{\s*syncTodoItems\(true\);\s*\}')) {
+  Fail "manual todo sync does not delegate to the feedback-aware implementation"
+}
+if (-not [regex]::IsMatch($mainRaw, '(?s)private void requestAutomaticTodoValidation\(\).*?syncTodoItems\(false\)')) {
+  Fail "automatic cloud validation is not silent and background-triggered"
+}
+if (-not [regex]::IsMatch($mainRaw, '(?s)handleReminderIntent\(getIntent\(\)\);.*?currentPage\s*!=\s*PAGE_TODO.*?requestAutomaticTodoValidation\(\)')) {
+  Fail "app opening does not request one automatic cloud validation"
+}
+if (-not [regex]::IsMatch($mainRaw, '(?s)else if \(page == PAGE_HOME && previousPage != PAGE_HOME\).*?requestAutomaticTodoValidation\(\)')) {
+  Fail "entering Home does not request automatic cloud validation"
+}
+if (-not [regex]::IsMatch($mainRaw, '(?s)protected void onResume\(\).*?currentPage == PAGE_HOME.*?requestAutomaticTodoValidation\(\)')) {
+  Fail "returning to Home/Todo does not request automatic cloud validation"
 }
 
 if ($failures.Count -gt 0) {

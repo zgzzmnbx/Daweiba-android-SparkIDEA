@@ -34,8 +34,8 @@ if (($env:Path -split ";") -notcontains $javaBin) {
 # $versionName = "0.52-feishu-card-silent-reminder"
 # Historical v0.6 UI marker retained for the UI contract script.
 # $versionName = "0.6.0-shadcn-rhea-ui"
-$versionCode = "53"
-$versionName = "0.7.0-cloud-feishu-relay"
+$versionCode = "54"
+$versionName = "0.7.1-cloud-startup-validation"
 
 $backupScript = Join-Path $projectRoot "tools\backup-core-code.py"
 $python = Get-Command python -ErrorAction SilentlyContinue

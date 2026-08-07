@@ -113,6 +113,7 @@ public class MainActivity extends Activity {
     private String fontStyle = UiFont.SYSTEM;
     private int currentPage = PAGE_HOME;
     private boolean todoSyncing;
+    private boolean automaticTodoValidationRequested;
     private boolean pendingBatchSyncAfterPermission;
     private FlashNote pendingSingleSyncAfterPermission;
     private String highlightedTaskId;
@@ -284,6 +285,9 @@ public class MainActivity extends Activity {
         }
         handleIncomingShare(getIntent());
         handleReminderIntent(getIntent());
+        if (currentPage != PAGE_TODO) {
+            requestAutomaticTodoValidation();
+        }
     }
 
     @Override
@@ -299,7 +303,16 @@ public class MainActivity extends Activity {
                 reminderScheduler.rescheduleAll();
             }
             BackgroundSyncScheduler.ensureScheduled(this);
+            if (currentPage == PAGE_HOME || currentPage == PAGE_TODO) {
+                requestAutomaticTodoValidation();
+            }
         }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        automaticTodoValidationRequested = false;
     }
 
     @Override
@@ -311,6 +324,10 @@ public class MainActivity extends Activity {
         int page = intent.getIntExtra(EXTRA_INITIAL_PAGE, -1);
         if (page >= PAGE_HOME && page <= PAGE_TODO) {
             switchPage(page);
+        }
+        if (currentPage == PAGE_HOME || currentPage == PAGE_TODO) {
+            automaticTodoValidationRequested = false;
+            requestAutomaticTodoValidation();
         }
     }
 
@@ -366,12 +383,18 @@ public class MainActivity extends Activity {
     }
 
     private void syncTodoItems() {
+        syncTodoItems(true);
+    }
+
+    private void syncTodoItems(final boolean showFeedback) {
         if (todoSyncing) {
             return;
         }
         final SyncSettings settings = SyncSettings.load(this);
         if (!settings.isReady()) {
-            Toast.makeText(this, R.string.image_sync_not_ready, Toast.LENGTH_SHORT).show();
+            if (showFeedback) {
+                Toast.makeText(this, R.string.image_sync_not_ready, Toast.LENGTH_SHORT).show();
+            }
             return;
         }
         todoSyncing = true;
@@ -404,25 +427,39 @@ public class MainActivity extends Activity {
                             if (result.getSummary() != null && result.getSummary().getConflictCount() > 0) {
                                 successMessage += "；" + getString(R.string.p1_natural_time_conflict);
                             }
-                            Toast.makeText(
-                                    MainActivity.this,
-                                    successMessage,
-                                    Toast.LENGTH_LONG).show();
+                            refreshNotes();
+                            if (showFeedback) {
+                                Toast.makeText(
+                                        MainActivity.this,
+                                        successMessage,
+                                        Toast.LENGTH_LONG).show();
+                            }
                         } else {
                             todoList.setVisibility(View.GONE);
                             todoEmptyTitle.setText(R.string.todo_sync_failed);
                             todoEmptyMessage.setText(result.getMessage());
                             todoEmptyTitle.setVisibility(View.VISIBLE);
                             todoEmptyMessage.setVisibility(View.VISIBLE);
-                            Toast.makeText(
-                                    MainActivity.this,
-                                    getString(R.string.todo_sync_failed, result.getMessage()),
-                                    Toast.LENGTH_LONG).show();
+                            refreshNotes();
+                            if (showFeedback) {
+                                Toast.makeText(
+                                        MainActivity.this,
+                                        getString(R.string.todo_sync_failed, result.getMessage()),
+                                        Toast.LENGTH_LONG).show();
+                            }
                         }
                     }
                 });
             }
         }).start();
+    }
+
+    private void requestAutomaticTodoValidation() {
+        if (automaticTodoValidationRequested) {
+            return;
+        }
+        automaticTodoValidationRequested = true;
+        syncTodoItems(false);
     }
 
     private void showTodoItems(List<TodoSyncItem> items) {
@@ -866,6 +903,9 @@ public class MainActivity extends Activity {
     private void switchPage(int page) {
         int previousPage = currentPage;
         currentPage = page;
+        if (page != previousPage) {
+            automaticTodoValidationRequested = false;
+        }
         applyPageVisibility();
         applyTheme(currentTheme);
         refreshNotes();
@@ -875,7 +915,10 @@ public class MainActivity extends Activity {
             rootLayout.requestFocus();
         }
         if (page == PAGE_TODO && previousPage != PAGE_TODO) {
+            automaticTodoValidationRequested = true;
             syncTodoItems();
+        } else if (page == PAGE_HOME && previousPage != PAGE_HOME) {
+            requestAutomaticTodoValidation();
         }
     }
 
