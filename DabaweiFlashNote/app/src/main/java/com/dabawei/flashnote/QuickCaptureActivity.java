@@ -25,7 +25,6 @@ public final class QuickCaptureActivity extends Activity {
 
     private static final String PREFS_NAME = "dabawei_flashnote_prefs";
     private static final String PREF_THEME_KEY = "theme_key";
-    private static final String PREF_CLAUDE_FONT_KEY = "claude_font_enabled";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +55,7 @@ public final class QuickCaptureActivity extends Activity {
         super.onResume();
         if (noteInput != null) {
             currentTheme = loadTheme();
+            applyFontStyle(title, saveButton);
             applyTheme();
         }
     }
@@ -140,9 +140,9 @@ public final class QuickCaptureActivity extends Activity {
 
     private void applyFontStyle(TextView title, Button saveButton) {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        boolean useClaudeFont = prefs.getBoolean(PREF_CLAUDE_FONT_KEY, false);
-        Typeface body = Typeface.create(useClaudeFont ? "serif" : "sans-serif", Typeface.NORMAL);
-        Typeface medium = Typeface.create(useClaudeFont ? "serif" : "sans-serif-medium", Typeface.NORMAL);
+        String style = UiFont.loadPreference(prefs);
+        Typeface body = UiFont.body(this, style);
+        Typeface medium = UiFont.medium(this, style);
         title.setTypeface(medium, Typeface.BOLD);
         noteInput.setTypeface(body, Typeface.NORMAL);
         saveButton.setTypeface(medium, Typeface.BOLD);

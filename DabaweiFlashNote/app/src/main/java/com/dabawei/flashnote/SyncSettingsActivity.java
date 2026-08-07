@@ -23,10 +23,12 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ScrollView;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -44,6 +46,7 @@ public final class SyncSettingsActivity extends Activity {
     private EditText remotePath;
     private EditText anchor;
     private Switch claudeFontStyle;
+    private Switch pingfangFontStyle;
     private FlashNoteDatabase database;
     private Spinner themeSpinner;
     private Button exportButton;
@@ -56,10 +59,24 @@ public final class SyncSettingsActivity extends Activity {
     private TextView reminderDiagnostics;
     private ThemePalette currentTheme;
     private String themePreference;
+    private String fontStyle = UiFont.SYSTEM;
+    private View settingsScreenRoot;
+    private View settingsBottomNav;
+    private View settingsNavHome;
+    private View settingsNavHistory;
+    private View settingsNavTodo;
+    private View settingsNavSettings;
+    private ImageView settingsNavHomeIcon;
+    private ImageView settingsNavHistoryIcon;
+    private ImageView settingsNavTodoIcon;
+    private ImageView settingsNavSettingsIcon;
+    private TextView settingsNavHomeLabel;
+    private TextView settingsNavHistoryLabel;
+    private TextView settingsNavTodoLabel;
+    private TextView settingsNavSettingsLabel;
 
     private static final String THEME_PREFS_NAME = "dabawei_flashnote_prefs";
     private static final String PREF_THEME_KEY = "theme_key";
-    private static final String PREF_CLAUDE_FONT_KEY = "claude_font_enabled";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +84,21 @@ public final class SyncSettingsActivity extends Activity {
         setContentView(R.layout.activity_sync_settings);
 
         database = new FlashNoteDatabase(this);
+        settingsScreenRoot = findViewById(R.id.settingsScreenRoot);
+        settingsBottomNav = findViewById(R.id.settingsBottomNav);
+        settingsNavHome = findViewById(R.id.settingsNavHome);
+        settingsNavHistory = findViewById(R.id.settingsNavHistory);
+        settingsNavTodo = findViewById(R.id.settingsNavTodo);
+        settingsNavSettings = findViewById(R.id.settingsNavSettings);
+        settingsNavHomeIcon = findViewById(R.id.settingsNavHomeIcon);
+        settingsNavHistoryIcon = findViewById(R.id.settingsNavHistoryIcon);
+        settingsNavTodoIcon = findViewById(R.id.settingsNavTodoIcon);
+        settingsNavSettingsIcon = findViewById(R.id.settingsNavSettingsIcon);
+        settingsNavHomeLabel = findViewById(R.id.settingsNavHomeLabel);
+        settingsNavHistoryLabel = findViewById(R.id.settingsNavHistoryLabel);
+        settingsNavTodoLabel = findViewById(R.id.settingsNavTodoLabel);
+        settingsNavSettingsLabel = findViewById(R.id.settingsNavSettingsLabel);
+        applySafeAreaPadding();
         enabled = findViewById(R.id.syncEnabled);
         baseUrl = findViewById(R.id.webdavBaseUrl);
         username = findViewById(R.id.webdavUsername);
@@ -74,6 +106,7 @@ public final class SyncSettingsActivity extends Activity {
         remotePath = findViewById(R.id.webdavRemotePath);
         anchor = findViewById(R.id.webdavAnchor);
         claudeFontStyle = findViewById(R.id.claudeFontStyle);
+        pingfangFontStyle = findViewById(R.id.pingfangFontStyle);
         themeSpinner = findViewById(R.id.themeSpinner);
         exportButton = findViewById(R.id.exportButton);
         Button reminderNotificationSettings = findViewById(R.id.reminderNotificationSettingsButton);
@@ -110,13 +143,40 @@ public final class SyncSettingsActivity extends Activity {
         SharedPreferences themePrefs = getSharedPreferences(THEME_PREFS_NAME, MODE_PRIVATE);
         themePreference = loadThemePreference(themePrefs);
         currentTheme = ThemePalette.resolve(themePreference, isSystemDark());
-        claudeFontStyle.setChecked(themePrefs.getBoolean(PREF_CLAUDE_FONT_KEY, false));
+        fontStyle = UiFont.loadPreference(themePrefs);
+        claudeFontStyle.setChecked(UiFont.CLAUDE.equals(fontStyle));
+        pingfangFontStyle.setChecked(UiFont.PINGFANG.equals(fontStyle));
         bindThemeSpinner();
         bindVersionInfo(versionInfo);
-        applyFontStyle(claudeFontStyle.isChecked());
+        applyFontStyle(fontStyle);
         bindSecretToggle(webdavPasswordToggle, password);
         bindSecretToggle(feishuWebhookToggle, feishuWebhookUrl);
         applyTheme(currentTheme);
+
+        settingsNavHome.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openMainPage(MainActivity.PAGE_HOME);
+            }
+        });
+        settingsNavHistory.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openMainPage(MainActivity.PAGE_HISTORY);
+            }
+        });
+        settingsNavTodo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openMainPage(MainActivity.PAGE_TODO);
+            }
+        });
+        settingsNavSettings.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ((ScrollView) findViewById(R.id.settingsScroll)).smoothScrollTo(0, 0);
+            }
+        });
 
         reminderNotificationSettings.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -215,12 +275,24 @@ public final class SyncSettingsActivity extends Activity {
         claudeFontStyle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                boolean enabled = claudeFontStyle.isChecked();
-                getSharedPreferences(THEME_PREFS_NAME, MODE_PRIVATE)
-                        .edit()
-                        .putBoolean(PREF_CLAUDE_FONT_KEY, enabled)
-                        .apply();
-                applyFontStyle(enabled);
+                if (claudeFontStyle.isChecked()) {
+                    pingfangFontStyle.setChecked(false);
+                    setFontStyle(UiFont.CLAUDE);
+                } else {
+                    setFontStyle(UiFont.SYSTEM);
+                }
+            }
+        });
+
+        pingfangFontStyle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (pingfangFontStyle.isChecked()) {
+                    claudeFontStyle.setChecked(false);
+                    setFontStyle(UiFont.PINGFANG);
+                } else {
+                    setFontStyle(UiFont.SYSTEM);
+                }
             }
         });
 
@@ -267,6 +339,13 @@ public final class SyncSettingsActivity extends Activity {
         super.onResume();
         if (reminderDiagnostics != null) {
             refreshReminderDiagnostics();
+        }
+        SharedPreferences prefs = getSharedPreferences(THEME_PREFS_NAME, MODE_PRIVATE);
+        fontStyle = UiFont.loadPreference(prefs);
+        if (claudeFontStyle != null && pingfangFontStyle != null) {
+            claudeFontStyle.setChecked(UiFont.CLAUDE.equals(fontStyle));
+            pingfangFontStyle.setChecked(UiFont.PINGFANG.equals(fontStyle));
+            applyFontStyle(fontStyle);
         }
         if (currentTheme != null) {
             applyTheme(currentTheme);
@@ -340,6 +419,8 @@ public final class SyncSettingsActivity extends Activity {
         int primaryButtonText = Color.parseColor(theme.getPrimaryButtonTextColor());
 
         View root = findViewById(R.id.settingsRoot);
+        settingsScreenRoot.setBackgroundColor(screen);
+        findViewById(R.id.settingsScroll).setBackgroundColor(screen);
         root.setBackgroundColor(screen);
         for (int cardId : new int[]{
                 R.id.appearanceCard, R.id.reminderCard, R.id.feishuCard, R.id.syncDataCard, R.id.versionInfo}) {
@@ -349,7 +430,7 @@ public final class SyncSettingsActivity extends Activity {
             }
         }
         for (int textId : new int[]{
-                R.id.settingsTitle, R.id.themeSelectLabel, R.id.claudeFontStyle,
+                R.id.settingsTitle, R.id.themeSelectLabel, R.id.claudeFontStyle, R.id.pingfangFontStyle,
                 R.id.dailyOverviewEnabled, R.id.backgroundSyncEnabled, R.id.lockscreenPrivate,
                 R.id.feishuPushEnabled, R.id.syncEnabled}) {
             View view = findViewById(textId);
@@ -384,6 +465,11 @@ public final class SyncSettingsActivity extends Activity {
         styleButton(findViewById(R.id.saveSyncSettingsButton), accentDark, primaryButtonText, Color.TRANSPARENT);
         tintSecretButton(findViewById(R.id.webdavPasswordToggle), secondary);
         tintSecretButton(findViewById(R.id.feishuWebhookToggle), secondary);
+        styleBottomNav(settingsBottomNav, surface, border);
+        styleNavItem(settingsNavHome, settingsNavHomeIcon, settingsNavHomeLabel, secondary, false);
+        styleNavItem(settingsNavHistory, settingsNavHistoryIcon, settingsNavHistoryLabel, secondary, false);
+        styleNavItem(settingsNavTodo, settingsNavTodoIcon, settingsNavTodoLabel, secondary, false);
+        styleNavItem(settingsNavSettings, settingsNavSettingsIcon, settingsNavSettingsLabel, accentDark, true);
         if (Build.VERSION.SDK_INT >= 21) {
             getWindow().setStatusBarColor(screen);
             getWindow().setNavigationBarColor(screen);
@@ -393,6 +479,56 @@ public final class SyncSettingsActivity extends Activity {
             }
             getWindow().getDecorView().setSystemUiVisibility(flags);
         }
+    }
+
+    private void setFontStyle(String nextStyle) {
+        fontStyle = nextStyle;
+        SharedPreferences prefs = getSharedPreferences(THEME_PREFS_NAME, MODE_PRIVATE);
+        prefs.edit()
+                .putString(UiFont.PREF_STYLE_KEY, nextStyle)
+                .putBoolean(UiFont.PREF_CLAUDE_KEY, UiFont.CLAUDE.equals(nextStyle))
+                .apply();
+        applyFontStyle(fontStyle);
+        applyTheme(currentTheme);
+    }
+
+    private void openMainPage(int page) {
+        Intent intent = new Intent(this, MainActivity.class)
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                .putExtra(MainActivity.EXTRA_INITIAL_PAGE, page);
+        startActivity(intent);
+        finish();
+    }
+
+    private void applySafeAreaPadding() {
+        settingsScreenRoot.setPadding(
+                Math.round(dp(16)),
+                getStatusBarHeight() + Math.round(dp(16)),
+                Math.round(dp(16)),
+                Math.round(dp(10)));
+    }
+
+    private int getStatusBarHeight() {
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            return getResources().getDimensionPixelSize(resourceId);
+        }
+        return Math.round(dp(24));
+    }
+
+    private void styleBottomNav(View nav, int backgroundColor, int borderColor) {
+        nav.setBackground(makeRoundedBackground(backgroundColor, borderColor, 12));
+        if (Build.VERSION.SDK_INT >= 21) {
+            nav.setElevation(0f);
+            nav.setTranslationZ(0f);
+        }
+    }
+
+    private void styleNavItem(View item, ImageView icon, TextView label, int color, boolean active) {
+        item.setPadding(0, (int) dp(8), 0, (int) dp(9));
+        icon.setColorFilter(color);
+        label.setTextColor(color);
+        label.setTypeface(UiFont.body(this, fontStyle), active ? Typeface.BOLD : Typeface.NORMAL);
     }
 
     private void tintSecretButton(ImageButton button, int color) {
@@ -555,10 +691,8 @@ public final class SyncSettingsActivity extends Activity {
         }
     }
 
-    private void applyFontStyle(boolean enabled) {
-        Typeface typeface = enabled
-                ? Typeface.create("serif", Typeface.NORMAL)
-                : Typeface.create("sans-serif", Typeface.NORMAL);
+    private void applyFontStyle(String style) {
+        Typeface typeface = UiFont.body(this, style);
         applyTypefaceRecursive(getWindow().getDecorView(), typeface);
     }
 

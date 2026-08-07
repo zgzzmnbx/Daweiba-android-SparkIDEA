@@ -23,6 +23,7 @@
     <string name="theme_switch">主题</string>
     <string name="theme_select">主题选择</string>
     <string name="claude_font_style">Claude 字体风格</string>
+    <string name="pingfang_font_style">苹方字体</string>
     <string name="theme_button_label">主题：%1$s</string>
     <string name="settings_title">设置</string>
     <string name="settings_gear">⚙</string>
@@ -126,7 +127,7 @@
     <string name="sync_data_section">同步与数据</string>
     <string name="about_section">关于</string>
     <string name="theme_help">跟随系统会在系统浅色与深色之间自动切换。</string>
-    <string name="font_help">只影响笔记正文阅读，不改变控件和标题。</string>
+    <string name="font_help">苹方与 Claude 字体互斥，选择后立即应用到阅读和操作文字。</string>
     <string name="reminder_help">通知、精确提醒、每日概览和后台同步可以分别控制。</string>
     <string name="feishu_help">本地提醒仍是主链路；网络失败不会影响手机提醒。</string>
     <string name="sync_data_help">WebDAV 凭据保留在本机，密码默认隐藏。</string>

@@ -74,6 +74,7 @@ public class MainActivity extends Activity {
     private View noteInputPanel;
     private View saveActions;
     private View historyHeader;
+    private View noteListContainer;
     private View todoPage;
     private View bottomNav;
     private ListView noteList;
@@ -108,7 +109,7 @@ public class MainActivity extends Activity {
     private ThemePalette currentTheme;
     private TodoAdapter todoAdapter;
     private ReminderScheduler reminderScheduler;
-    private boolean claudeFontEnabled;
+    private String fontStyle = UiFont.SYSTEM;
     private int currentPage = PAGE_HOME;
     private boolean todoSyncing;
     private boolean pendingBatchSyncAfterPermission;
@@ -119,12 +120,12 @@ public class MainActivity extends Activity {
     private float pullStartY;
     private boolean isPulling;
 
-    private static final int PAGE_HOME = 0;
-    private static final int PAGE_HISTORY = 1;
-    private static final int PAGE_TODO = 2;
+    static final int PAGE_HOME = 0;
+    static final int PAGE_HISTORY = 1;
+    static final int PAGE_TODO = 2;
     private static final String PREFS_NAME = "dabawei_flashnote_prefs";
     private static final String PREF_THEME_KEY = "theme_key";
-    private static final String PREF_CLAUDE_FONT_KEY = "claude_font_enabled";
+    static final String EXTRA_INITIAL_PAGE = "initial_page";
     private static final String PENDING_IMAGE_DIR = "pending-images";
     private static final int REQUEST_PICK_IMAGE = 1001;
     private static final int REQUEST_READ_IMAGES_PERMISSION = 1002;
@@ -151,6 +152,7 @@ public class MainActivity extends Activity {
         noteInputPanel = findViewById(R.id.noteInputPanel);
         saveActions = findViewById(R.id.saveActions);
         historyHeader = findViewById(R.id.historyHeader);
+        noteListContainer = findViewById(R.id.noteListContainer);
         todoPage = findViewById(R.id.todoPage);
         bottomNav = findViewById(R.id.bottomNav);
         appTitle = findViewById(R.id.appTitle);
@@ -192,7 +194,7 @@ public class MainActivity extends Activity {
 
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         currentTheme = loadThemePreference(prefs);
-        claudeFontEnabled = prefs.getBoolean(PREF_CLAUDE_FONT_KEY, false);
+        fontStyle = UiFont.loadPreference(prefs);
         applyTheme(currentTheme);
 
         saveButton.setOnClickListener(new View.OnClickListener() {
@@ -273,10 +275,12 @@ public class MainActivity extends Activity {
             }
         });
         bindPullGesture();
-        switchPage(PAGE_HOME);
+        switchPage(getIntent().getIntExtra(EXTRA_INITIAL_PAGE, PAGE_HOME));
 
         refreshNotes();
-        focusInput();
+        if (currentPage == PAGE_HOME) {
+            focusInput();
+        }
         handleIncomingShare(getIntent());
         handleReminderIntent(getIntent());
     }
@@ -287,7 +291,7 @@ public class MainActivity extends Activity {
         if (noteAdapter != null) {
             SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
             currentTheme = loadThemePreference(prefs);
-            claudeFontEnabled = prefs.getBoolean(PREF_CLAUDE_FONT_KEY, false);
+            fontStyle = UiFont.loadPreference(prefs);
             applyTheme(currentTheme);
             refreshNotes();
             if (reminderScheduler != null) {
@@ -303,6 +307,10 @@ public class MainActivity extends Activity {
         setIntent(intent);
         handleIncomingShare(intent);
         handleReminderIntent(intent);
+        int page = intent.getIntExtra(EXTRA_INITIAL_PAGE, -1);
+        if (page >= PAGE_HOME && page <= PAGE_TODO) {
+            switchPage(page);
+        }
     }
 
     private void saveCurrentNote() {
@@ -878,6 +886,7 @@ public class MainActivity extends Activity {
         noteInputPanel.setVisibility(home ? View.VISIBLE : View.GONE);
         saveActions.setVisibility(home ? View.VISIBLE : View.GONE);
         historyHeader.setVisibility(todo ? View.GONE : View.VISIBLE);
+        noteListContainer.setVisibility(todo ? View.GONE : View.VISIBLE);
         noteList.setVisibility(todo ? View.GONE : View.VISIBLE);
         todoPage.setVisibility(todo ? View.VISIBLE : View.GONE);
         historyTitle.setText(history ? R.string.history_page_title : R.string.history_title);
@@ -1130,9 +1139,9 @@ public class MainActivity extends Activity {
         pullRoot.setBackgroundColor(screen);
         rootLayout.setBackgroundColor(screen);
         applySafeAreaPadding();
-        applyFontStyle(claudeFontEnabled);
+        applyFontStyle(fontStyle);
         appTitle.setTextColor(primary);
-        styleLogoTitle(appTitle, claudeFontEnabled);
+        styleLogoTitle(appTitle, fontStyle);
         syncStatus.setTextColor(accent);
         historyTitle.setTextColor(secondary);
         searchIcon.setColorFilter(secondary);
@@ -1187,8 +1196,8 @@ public class MainActivity extends Activity {
             }
         }
 
-        noteAdapter.setTheme(theme, claudeFontEnabled);
-        todoAdapter.setTheme(theme, claudeFontEnabled);
+        noteAdapter.setTheme(theme, fontStyle);
+        todoAdapter.setTheme(theme, fontStyle);
     }
 
     private void bindPullGesture() {
@@ -1522,18 +1531,17 @@ public class MainActivity extends Activity {
         button.setCompoundDrawablePadding((int) dp(7));
     }
 
-    private void styleLogoTitle(TextView title, boolean useClaudeFont) {
-        String family = useClaudeFont ? "serif" : "sans-serif-medium";
-        title.setTypeface(android.graphics.Typeface.create(family, android.graphics.Typeface.BOLD));
+    private void styleLogoTitle(TextView title, String style) {
+        title.setTypeface(UiFont.medium(this, style), android.graphics.Typeface.BOLD);
         if (android.os.Build.VERSION.SDK_INT >= 21) {
             title.setLetterSpacing(0.08f);
         }
         title.setIncludeFontPadding(false);
     }
 
-    private void applyFontStyle(boolean useClaudeFont) {
-        Typeface body = Typeface.create(useClaudeFont ? "serif" : "sans-serif", Typeface.NORMAL);
-        Typeface medium = Typeface.create(useClaudeFont ? "serif" : "sans-serif-medium", Typeface.NORMAL);
+    private void applyFontStyle(String style) {
+        Typeface body = UiFont.body(this, style);
+        Typeface medium = UiFont.medium(this, style);
         applyTypeface(appTitle, medium, Typeface.BOLD);
         applyTypeface(syncStatus, medium, Typeface.BOLD);
         applyTypeface(historyTitle, medium, Typeface.BOLD);
@@ -1590,7 +1598,7 @@ public class MainActivity extends Activity {
         item.setPadding(0, (int) dp(8), 0, (int) dp(9));
         icon.setColorFilter(color);
         label.setTextColor(color);
-        Typeface typeface = Typeface.create(claudeFontEnabled ? "serif" : "sans-serif", Typeface.NORMAL);
+        Typeface typeface = UiFont.body(this, fontStyle);
         label.setTypeface(typeface, active ? Typeface.BOLD : Typeface.NORMAL);
     }
 
@@ -1960,7 +1968,7 @@ public class MainActivity extends Activity {
         private final SimpleDateFormat dateTimeFormat;
         private final List<FlashNote> notes = new ArrayList<>();
         private ThemePalette theme = ThemePalette.findByKey("paper");
-        private boolean useClaudeFont;
+        private String fontStyle = UiFont.SYSTEM;
 
         NoteAdapter(Context context) {
             inflater = LayoutInflater.from(context);
@@ -1973,9 +1981,9 @@ public class MainActivity extends Activity {
             notifyDataSetChanged();
         }
 
-        void setTheme(ThemePalette nextTheme, boolean nextUseClaudeFont) {
+        void setTheme(ThemePalette nextTheme, String nextFontStyle) {
             theme = nextTheme;
-            useClaudeFont = nextUseClaudeFont;
+            fontStyle = nextFontStyle;
             notifyDataSetChanged();
         }
 
@@ -2016,8 +2024,8 @@ public class MainActivity extends Activity {
             }
 
             FlashNote note = notes.get(position);
-            Typeface body = Typeface.create(useClaudeFont ? "serif" : "sans-serif", Typeface.NORMAL);
-            Typeface medium = Typeface.create(useClaudeFont ? "serif" : "sans-serif-medium", Typeface.NORMAL);
+            Typeface body = UiFont.body(MainActivity.this, fontStyle);
+            Typeface medium = UiFont.medium(MainActivity.this, fontStyle);
             holder.content.setTypeface(body, Typeface.NORMAL);
             holder.time.setTypeface(body, Typeface.NORMAL);
             holder.syncBadge.setTypeface(medium, Typeface.BOLD);
@@ -2089,7 +2097,7 @@ public class MainActivity extends Activity {
     private final class TodoAdapter extends BaseAdapter {
         private final List<TodoRow> rows = new ArrayList<>();
         private ThemePalette theme = ThemePalette.findByKey("paper");
-        private boolean useClaudeFont;
+        private String fontStyle = UiFont.SYSTEM;
 
         TodoAdapter(Context context) {
         }
@@ -2121,9 +2129,9 @@ public class MainActivity extends Activity {
             return -1;
         }
 
-        void setTheme(ThemePalette nextTheme, boolean nextUseClaudeFont) {
+        void setTheme(ThemePalette nextTheme, String nextFontStyle) {
             theme = nextTheme;
-            useClaudeFont = nextUseClaudeFont;
+            fontStyle = nextFontStyle;
             notifyDataSetChanged();
         }
 
@@ -2159,8 +2167,8 @@ public class MainActivity extends Activity {
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT));
 
-            Typeface body = Typeface.create(useClaudeFont ? "serif" : "sans-serif", Typeface.NORMAL);
-            Typeface medium = Typeface.create(useClaudeFont ? "serif" : "sans-serif-medium", Typeface.NORMAL);
+            Typeface body = UiFont.body(MainActivity.this, fontStyle);
+            Typeface medium = UiFont.medium(MainActivity.this, fontStyle);
 
             TextView title = new TextView(MainActivity.this);
             title.setText(displaySourceTitle(rowData.sourcePath));
@@ -2208,7 +2216,7 @@ public class MainActivity extends Activity {
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT));
 
-            Typeface body = Typeface.create(useClaudeFont ? "serif" : "sans-serif", Typeface.NORMAL);
+            Typeface body = UiFont.body(MainActivity.this, fontStyle);
             TextView content = new TextView(MainActivity.this);
             content.setText(cleanTodoText(item.getText()));
             content.setTextColor(Color.parseColor(theme.getPrimaryTextColor()));
