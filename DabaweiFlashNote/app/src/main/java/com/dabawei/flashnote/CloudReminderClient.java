@@ -39,6 +39,7 @@ public final class CloudReminderClient {
             List<TodoSyncItem> incoming) {
         CloudReminderSettings settings = CloudReminderSettings.load(context);
         if (!settings.isEnabled()) {
+            CloudReminderSettings.clearCloudTaskIds(context);
             CloudReminderSettings.recordSync(context, true, "云端提醒已关闭");
             return Result.success("云端提醒已关闭");
         }
@@ -46,8 +47,13 @@ public final class CloudReminderClient {
             CloudReminderSettings.recordSync(context, false, "云端提醒未配置");
             return Result.failed("云端提醒未配置");
         }
-        String payload = buildPayload(context, database, incoming);
-        return post(context, settings, payload);
+        Set<String> registeredTaskIds = new HashSet<>();
+        String payload = buildPayload(context, database, incoming, registeredTaskIds);
+        Result result = post(context, settings, payload);
+        if (result.isSuccess()) {
+            CloudReminderSettings.recordCloudTaskIds(context, registeredTaskIds);
+        }
+        return result;
     }
 
     public static Result clear(Context context) {
@@ -60,13 +66,18 @@ public final class CloudReminderClient {
         }
         String payload = "{\"device_id\":\"" + escapeJson(deviceId(context))
                 + "\",\"observed_task_ids\":[],\"active_reminders\":[]}";
-        return post(context, settings, payload);
+        Result result = post(context, settings, payload);
+        if (result.isSuccess()) {
+            CloudReminderSettings.clearCloudTaskIds(context);
+        }
+        return result;
     }
 
     private static String buildPayload(
             Context context,
             FlashNoteDatabase database,
-            List<TodoSyncItem> incoming) {
+            List<TodoSyncItem> incoming,
+            Set<String> registeredTaskIds) {
         Set<String> observed = new HashSet<>();
         StringBuilder observedJson = new StringBuilder();
         if (incoming != null) {
@@ -91,7 +102,12 @@ public final class CloudReminderClient {
         List<ReminderRecord> records = database.getRemoteReminders();
         for (ReminderRecord record : records) {
             if (record == null || !observed.contains(record.getTaskId())
-                    || record.getRemindAt() <= now
+                    || ReminderRecord.STATUS_CANCELLED.equals(record.getStatus())
+                    || record.getRemindAt() <= 0L) {
+                continue;
+            }
+            registeredTaskIds.add(record.getTaskId());
+            if (record.getRemindAt() <= now
                     || !(ReminderRecord.STATUS_SCHEDULED.equals(record.getStatus())
                     || ReminderRecord.STATUS_SNOOZED.equals(record.getStatus()))
                     || !activeTaskIds.add(record.getTaskId())) {

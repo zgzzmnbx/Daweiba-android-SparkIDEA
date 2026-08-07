@@ -28,6 +28,7 @@
     <string name="settings_title">设置</string>
     <string name="settings_gear">⚙</string>
     <string name="synced_badge">已同步</string>
+    <string name="cloud_pushed_badge">云端已推送</string>
     <string name="delete_note">删除</string>
     <string name="note_deleted">已删除</string>
     <string name="empty_note_tip">先写一点内容</string>
@@ -52,12 +53,13 @@
     <string name="reminder_saved">已设置提醒：%1$s</string>
     <string name="reminder_cancelled">已取消提醒</string>
     <string name="reminder_overdue">提醒时间已过期，请在待办页查看</string>
-    <string name="reminder_overdue_badge">已过期 · 查看待办</string>
+    <string name="reminder_overdue_badge">已过期</string>
     <string name="reminder_notification_permission_explain">待办提醒需要通知权限，才能在锁屏和 App 退出后提醒你。</string>
     <string name="reminder_exact_permission_explain">精确提醒可让待办尽量在设定分钟触发；未开启时仍会提醒，但系统可能延迟。</string>
     <string name="reminder_open_settings">去开启</string>
     <string name="reminder_system_delay">已设置提醒；未开启精确提醒，系统可能延迟触发</string>
     <string name="reminder_bell">提醒：%1$s</string>
+    <string name="reminder_compact_badge">提醒 %1$s</string>
     <string name="reminder_bell_empty">未设置提醒</string>
     <string name="reminder_notification_title">待办提醒</string>
     <string name="reminder_notification_settings">重新开启通知权限</string>

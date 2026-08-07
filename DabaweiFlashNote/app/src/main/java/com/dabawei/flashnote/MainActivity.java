@@ -25,6 +25,7 @@ import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.InputType;
+import android.text.TextUtils;
 import android.view.MotionEvent;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.MimeTypeMap;
@@ -1626,6 +1627,44 @@ public class MainActivity extends Activity {
         return value * getResources().getDisplayMetrics().density;
     }
 
+    private String formatReminderBadge(long remindAt, String fallback) {
+        if (remindAt > 0L) {
+            Calendar target = Calendar.getInstance();
+            target.setTimeInMillis(remindAt);
+            Calendar today = Calendar.getInstance();
+            boolean sameDay = target.get(Calendar.ERA) == today.get(Calendar.ERA)
+                    && target.get(Calendar.YEAR) == today.get(Calendar.YEAR)
+                    && target.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR);
+            String pattern = sameDay ? "HH:mm" : "MM-dd HH:mm";
+            return getString(
+                    R.string.reminder_compact_badge,
+                    new SimpleDateFormat(pattern, Locale.US).format(target.getTime()));
+        }
+        String value = fallback == null ? "" : fallback.trim();
+        if (value.startsWith("提醒：")) {
+            value = value.substring(3).trim();
+        } else if (value.startsWith("提醒:")) {
+            value = value.substring(3).trim();
+        }
+        if (value.length() > 10) {
+            value = value.substring(0, 10) + "…";
+        }
+        return value.length() == 0
+                ? getString(R.string.reminder_bell_empty)
+                : getString(R.string.reminder_compact_badge, value);
+    }
+
+    private ReminderRecord findLocalReminder(FlashNote note) {
+        if (note == null || note.getId() <= 0L) {
+            return null;
+        }
+        ReminderRecord reminder = database.getReminderForLocalNote(note.getId());
+        if (reminder == null) {
+            reminder = database.getReminderByTaskId(ReminderIds.localTaskId(note.getId()));
+        }
+        return reminder;
+    }
+
     private void setElevationDp(View view, float elevationDp) {
         if (android.os.Build.VERSION.SDK_INT >= 21) {
             view.setElevation(dp(elevationDp));
@@ -2017,6 +2056,7 @@ public class MainActivity extends Activity {
                 holder.syncBadge = row.findViewById(R.id.syncBadge);
                 holder.todoBadge = row.findViewById(R.id.todoBadge);
                 holder.reminderBadge = row.findViewById(R.id.reminderBadge);
+                holder.cloudBadge = row.findViewById(R.id.cloudBadge);
                 holder.deleteButton = row.findViewById(R.id.deleteButton);
                 row.setTag(holder);
             } else {
@@ -2030,6 +2070,8 @@ public class MainActivity extends Activity {
             holder.time.setTypeface(body, Typeface.NORMAL);
             holder.syncBadge.setTypeface(medium, Typeface.BOLD);
             holder.todoBadge.setTypeface(medium, Typeface.BOLD);
+            holder.reminderBadge.setTypeface(medium, Typeface.BOLD);
+            holder.cloudBadge.setTypeface(medium, Typeface.BOLD);
             holder.content.setTextColor(Color.parseColor(theme.getPrimaryTextColor()));
             holder.time.setTextColor(Color.parseColor(theme.getSecondaryTextColor()));
             holder.noteCard.setBackground(makeRoundedBackground(
@@ -2044,6 +2086,8 @@ public class MainActivity extends Activity {
                     Color.parseColor(theme.getTodoButtonColor()), Color.TRANSPARENT, 999));
             holder.reminderBadge.setBackground(makeRoundedBackground(
                     Color.parseColor(theme.getWarningColor()), Color.TRANSPARENT, 999));
+            holder.cloudBadge.setBackground(makeRoundedBackground(
+                    Color.parseColor(theme.getSuccessColor()), Color.TRANSPARENT, 999));
             setElevationDp(holder.noteCard, 0);
             holder.content.setText(note.getContent());
             holder.time.setText(dateTimeFormat.format(new Date(note.getCreatedAtMillis())));
@@ -2052,23 +2096,27 @@ public class MainActivity extends Activity {
             holder.todoBadge.setTextColor(Color.parseColor(theme.getTodoButtonTextColor()));
             holder.todoBadge.setVisibility(note.getNoteType() == FlashNote.TYPE_TODO ? View.VISIBLE : View.GONE);
             ReminderRecord localReminder = note.getNoteType() == FlashNote.TYPE_TODO
-                    ? database.getReminderForLocalNote(note.getId())
+                    ? findLocalReminder(note)
                     : null;
             if (localReminder != null
-                    && (ReminderRecord.STATUS_SCHEDULED.equals(localReminder.getStatus())
-                    || ReminderRecord.STATUS_SNOOZED.equals(localReminder.getStatus()))) {
-                String remindText = localReminder.getRemindAtText().length() > 0
-                        ? localReminder.getRemindAtText()
-                        : TodoDateTime.format(localReminder.getRemindAt());
-                holder.reminderBadge.setText(getString(R.string.reminder_bell, remindText));
-                holder.reminderBadge.setVisibility(View.VISIBLE);
-            } else if (localReminder != null && ReminderRecord.STATUS_OVERDUE.equals(localReminder.getStatus())) {
-                holder.reminderBadge.setText(R.string.reminder_overdue_badge);
+                    && !ReminderRecord.STATUS_CANCELLED.equals(localReminder.getStatus())
+                    && localReminder.getRemindAt() > 0L) {
+                holder.reminderBadge.setText(formatReminderBadge(
+                        localReminder.getRemindAt(), localReminder.getRemindAtText()));
                 holder.reminderBadge.setVisibility(View.VISIBLE);
             } else {
                 holder.reminderBadge.setVisibility(View.GONE);
             }
             holder.reminderBadge.setTextColor(Color.parseColor(theme.getWarningTextColor()));
+            boolean cloudPushed = note.getNoteType() == FlashNote.TYPE_TODO
+                    && note.getSyncState() == FlashNoteDatabase.SYNC_SYNCED
+                    && (CloudReminderSettings.isCloudTaskRegistered(
+                    MainActivity.this,
+                    ReminderIds.localTaskId(note.getId()))
+                    || CloudReminderSettings.load(MainActivity.this).shouldUseCloudForTrigger());
+            holder.cloudBadge.setText(R.string.cloud_pushed_badge);
+            holder.cloudBadge.setTextColor(Color.parseColor(theme.getSuccessTextColor()));
+            holder.cloudBadge.setVisibility(cloudPushed ? View.VISIBLE : View.GONE);
             if (android.os.Build.VERSION.SDK_INT >= 21) {
                 holder.deleteButton.setBackgroundTintList(null);
                 holder.deleteButton.setStateListAnimator(null);
@@ -2217,6 +2265,7 @@ public class MainActivity extends Activity {
                     ViewGroup.LayoutParams.WRAP_CONTENT));
 
             Typeface body = UiFont.body(MainActivity.this, fontStyle);
+            Typeface medium = UiFont.medium(MainActivity.this, fontStyle);
             TextView content = new TextView(MainActivity.this);
             content.setText(cleanTodoText(item.getText()));
             content.setTextColor(Color.parseColor(theme.getPrimaryTextColor()));
@@ -2237,6 +2286,47 @@ public class MainActivity extends Activity {
                     ViewGroup.LayoutParams.WRAP_CONTENT);
             metaParams.topMargin = (int) dp(7);
             card.addView(meta, metaParams);
+
+            TextView reminderBadge = new TextView(MainActivity.this);
+            reminderBadge.setText(buildTodoReminderText(item));
+            reminderBadge.setTextColor(Color.parseColor(theme.getWarningTextColor()));
+            reminderBadge.setTextSize(11);
+            reminderBadge.setTypeface(medium, Typeface.BOLD);
+            reminderBadge.setGravity(android.view.Gravity.CENTER);
+            reminderBadge.setSingleLine(true);
+            reminderBadge.setEllipsize(TextUtils.TruncateAt.END);
+            reminderBadge.setPadding((int) dp(10), 0, (int) dp(10), 0);
+            reminderBadge.setBackground(makeRoundedBackground(
+                    Color.parseColor(theme.getWarningColor()), Color.TRANSPARENT, 999));
+            LinearLayout.LayoutParams reminderParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    (int) dp(28));
+            reminderParams.gravity = android.view.Gravity.RIGHT;
+            reminderParams.topMargin = (int) dp(6);
+            card.addView(reminderBadge, reminderParams);
+
+            ReminderRecord cloudReminder = database.getReminderByTaskId(item.getTaskId());
+            if (cloudReminder != null
+                    && !ReminderRecord.STATUS_CANCELLED.equals(cloudReminder.getStatus())
+                    && CloudReminderSettings.isCloudTaskRegistered(MainActivity.this, item.getTaskId())) {
+                TextView cloudBadge = new TextView(MainActivity.this);
+                cloudBadge.setText(R.string.cloud_pushed_badge);
+                cloudBadge.setTextColor(Color.parseColor(theme.getSuccessTextColor()));
+                cloudBadge.setTextSize(11);
+                cloudBadge.setTypeface(medium, Typeface.BOLD);
+                cloudBadge.setGravity(android.view.Gravity.CENTER);
+                cloudBadge.setMinHeight((int) dp(28));
+                cloudBadge.setPadding((int) dp(10), 0, (int) dp(10), 0);
+                cloudBadge.setBackground(makeRoundedBackground(
+                        Color.parseColor(theme.getSuccessColor()), Color.TRANSPARENT, 999));
+                LinearLayout.LayoutParams cloudParams = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        (int) dp(28));
+                cloudParams.gravity = android.view.Gravity.RIGHT;
+                cloudParams.topMargin = (int) dp(5);
+                card.addView(cloudBadge, cloudParams);
+            }
+
             card.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -2263,28 +2353,31 @@ public class MainActivity extends Activity {
                 }
                 builder.append("提示：").append(getString(R.string.p1_natural_time_conflict));
             }
+            return builder.length() == 0 ? "来自 Obsidian 待办同步" : builder.toString();
+        }
+
+        private String buildTodoReminderText(TodoSyncItem item) {
             ReminderRecord reminder = database.getReminderByTaskId(item.getTaskId());
-            if (builder.length() > 0) {
-                builder.append("\n");
-            }
             if (reminder != null && ReminderRecord.STATUS_OVERDUE.equals(reminder.getStatus())) {
-                builder.append(getString(R.string.reminder_overdue));
-            } else if (reminder != null
+                return getString(R.string.reminder_overdue_badge);
+            }
+            if (reminder != null
                     && (ReminderRecord.STATUS_SCHEDULED.equals(reminder.getStatus())
                     || ReminderRecord.STATUS_SNOOZED.equals(reminder.getStatus()))) {
                 String remindText = reminder.getRemindAtText().length() > 0
                         ? reminder.getRemindAtText()
                         : TodoDateTime.format(reminder.getRemindAt());
+                long remindAt = reminder.getRemindAt();
                 if (ReminderRecord.STATUS_SNOOZED.equals(reminder.getStatus())) {
-                    remindText = "稍后 " + TodoDateTime.format(reminder.getSnoozeUntil());
+                    remindAt = reminder.getSnoozeUntil();
+                    remindText = "稍后";
                 }
-                builder.append(getString(R.string.reminder_bell, remindText));
-            } else if (item.getRemindAtText().length() > 0) {
-                builder.append(getString(R.string.reminder_bell, item.getRemindAtText()));
-            } else {
-                builder.append(getString(R.string.reminder_bell_empty));
+                return formatReminderBadge(remindAt, remindText);
             }
-            return builder.length() == 0 ? "来自 Obsidian 待办同步" : builder.toString();
+            if (item.getRemindAtText().length() > 0) {
+                return formatReminderBadge(0L, item.getRemindAtText());
+            }
+            return getString(R.string.reminder_bell_empty);
         }
 
         private String cleanTodoText(String text) {
@@ -2340,6 +2433,7 @@ public class MainActivity extends Activity {
         TextView syncBadge;
         TextView todoBadge;
         TextView reminderBadge;
+        TextView cloudBadge;
         ImageButton deleteButton;
     }
 

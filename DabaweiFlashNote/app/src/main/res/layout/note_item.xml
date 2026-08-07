@@ -61,6 +61,24 @@
                 android:textColor="@color/muted_foreground"
                 android:textSize="12sp" />
 
+            <TextView
+                android:id="@+id/reminderBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="28dp"
+                android:layout_gravity="right"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/reminder_badge_background"
+                android:ellipsize="end"
+                android:gravity="center_vertical"
+                android:maxLines="1"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:singleLine="true"
+                android:textColor="@color/warning_foreground"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
@@ -87,21 +105,6 @@
                     android:textStyle="bold" />
 
                 <TextView
-                    android:id="@+id/reminderBadge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="28dp"
-                    android:layout_marginLeft="4dp"
-                    android:background="@drawable/reminder_badge_background"
-                    android:gravity="center"
-                    android:maxWidth="132dp"
-                    android:paddingLeft="8dp"
-                    android:paddingRight="8dp"
-                    android:textColor="@color/warning_foreground"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:visibility="gone" />
-
-                <TextView
                     android:id="@+id/syncBadge"
                     android:layout_width="wrap_content"
                     android:layout_height="28dp"
@@ -115,6 +118,21 @@
                     android:textColor="@color/success_foreground"
                     android:textSize="12sp"
                     android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/cloudBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="28dp"
+                    android:layout_marginLeft="4dp"
+                    android:background="@drawable/synced_badge_background"
+                    android:gravity="center"
+                    android:paddingLeft="8dp"
+                    android:paddingRight="8dp"
+                    android:text="@string/cloud_pushed_badge"
+                    android:textColor="@color/success_foreground"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
 
                 <ImageButton
                     android:id="@+id/deleteButton"

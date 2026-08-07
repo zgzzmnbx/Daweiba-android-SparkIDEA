@@ -110,7 +110,7 @@ $requiredIds = @(
   "dailyOverviewEnabled", "dailyOverviewTimeButton", "backgroundSyncEnabled", "cloudReminderEnabled", "cloudReminderHelp",
   "lockscreenPrivate", "feishuPushEnabled", "feishuWebhookUrl",
   "reminderDiagnostics", "refreshReminderDiagnosticsButton", "syncEnabled", "webdavBaseUrl", "webdavUsername", "webdavPassword", "webdavRemotePath", "webdavAnchor",
-  "saveSyncSettingsButton", "versionInfo", "quickNoteInput", "quickSaveButton", "widgetTitle", "widgetRecent", "widgetAction", "noteCard", "deleteButton"
+  "saveSyncSettingsButton", "versionInfo", "quickNoteInput", "quickSaveButton", "widgetTitle", "widgetRecent", "widgetAction", "noteCard", "deleteButton", "reminderBadge", "cloudBadge"
 )
 foreach ($id in $requiredIds) {
   if ($layoutText -notmatch ('@\+id/' + [regex]::Escape($id) + '\b')) { Fail "required view id missing: $id" }
@@ -141,12 +141,24 @@ foreach ($secretId in @("webdavPassword", "feishuWebhookUrl")) {
   }
 }
 
+$noteItemLayout = Read-Required (Join-Path $resRoot "layout\note_item.xml")
+$reminderBadgeMatch = [regex]::Match($noteItemLayout, '(?s)<TextView[^>]*android:id="@\+id/reminderBadge"[^>]*>')
+if (-not $reminderBadgeMatch.Success -or $reminderBadgeMatch.Value -notmatch 'android:layout_width="wrap_content"' -or $reminderBadgeMatch.Value -notmatch 'android:layout_gravity="right"' -or $reminderBadgeMatch.Value -notmatch 'android:singleLine="true"') {
+  Fail "reminder badge is not a right-aligned single-line status row"
+}
+if ($noteItemLayout -notmatch '@string/cloud_pushed_badge') {
+  Fail "home/history cloud push badge text is missing"
+}
+
 $cloudSettingsRaw = Read-Required (Join-Path $javaRoot "CloudReminderSettings.java")
 if ($cloudSettingsRaw -notmatch 'getBoolean\(KEY_ENABLED, true\)') {
   Fail "cloud reminder switch is not enabled by default"
 }
 if ($cloudSettingsRaw -notmatch 'isReady\(\)') {
   Fail "cloud reminder settings have no readiness gate"
+}
+if ($cloudSettingsRaw -notmatch 'recordCloudTaskIds|isCloudTaskRegistered') {
+  Fail "cloud reminder settings do not retain per-task cloud registration state"
 }
 
 $legacyIconFiles = @(
@@ -187,6 +199,12 @@ foreach ($path in $uiFiles) {
 $mainRaw = Read-Required (Join-Path $javaRoot "MainActivity.java")
 if ($mainRaw -match "\\uD83D\\uDD14|\\u26A0|\\u2315|\\u2699") { Fail "operation/status UI still uses emoji or glyph icons" }
 if ($mainRaw.Contains('Color.parseColor("#')) { Fail "MainActivity contains scattered UI hex color" }
+if ($mainRaw -notmatch 'reminderParams\.gravity\s*=\s*android\.view\.Gravity\.RIGHT') {
+  Fail "todo reminder badge is not right-aligned"
+}
+if ($mainRaw -notmatch 'reminderParams\s*=\s*new LinearLayout\.LayoutParams\(\s*ViewGroup\.LayoutParams\.WRAP_CONTENT') {
+  Fail "todo reminder badge is not compact"
+}
 
 $buildRaw = Read-Required (Join-Path $projectRoot "tools\build-apk.ps1")
 if (-not $buildRaw.Contains('$versionCode = "52"') -or -not $buildRaw.Contains('$versionName = "0.6.0-shadcn-rhea-ui"')) {

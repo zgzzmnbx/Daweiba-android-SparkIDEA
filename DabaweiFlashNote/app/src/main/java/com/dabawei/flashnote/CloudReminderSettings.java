@@ -4,7 +4,10 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import java.net.URL;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 
 public final class CloudReminderSettings {
     private static final String PREFS_NAME = "dabawei_cloud_reminder";
@@ -15,6 +18,7 @@ public final class CloudReminderSettings {
     private static final String KEY_LAST_SYNC_AT = "last_sync_at";
     private static final String KEY_LAST_SYNC_SUCCESS = "last_sync_success";
     private static final String KEY_LAST_SYNC_MESSAGE = "last_sync_message";
+    private static final String KEY_CLOUD_TASK_IDS = "cloud_task_ids";
 
     private final boolean enabled;
     private final String baseUrl;
@@ -49,7 +53,10 @@ public final class CloudReminderSettings {
         SharedPreferences.Editor editor = prefs(context).edit().putBoolean(KEY_ENABLED, enabled);
         if (enabled) {
             editor.putBoolean(KEY_LAST_SYNC_SUCCESS, false)
-                    .putString(KEY_LAST_SYNC_MESSAGE, "待下一次 WebDAV 同步登记");
+                    .putString(KEY_LAST_SYNC_MESSAGE, "待下一次 WebDAV 同步登记")
+                    .remove(KEY_CLOUD_TASK_IDS);
+        } else {
+            editor.remove(KEY_CLOUD_TASK_IDS);
         }
         editor.apply();
     }
@@ -70,6 +77,32 @@ public final class CloudReminderSettings {
 
     public static String getLastSyncMessage(Context context) {
         return prefs(context).getString(KEY_LAST_SYNC_MESSAGE, "尚未上报");
+    }
+
+    public static void recordCloudTaskIds(Context context, Set<String> taskIds) {
+        HashSet<String> normalized = new HashSet<>();
+        if (taskIds != null) {
+            for (String taskId : taskIds) {
+                if (taskId != null && taskId.trim().length() > 0) {
+                    normalized.add(taskId.trim());
+                }
+            }
+        }
+        prefs(context).edit().putStringSet(KEY_CLOUD_TASK_IDS, normalized).apply();
+    }
+
+    public static void clearCloudTaskIds(Context context) {
+        prefs(context).edit().remove(KEY_CLOUD_TASK_IDS).apply();
+    }
+
+    public static boolean isCloudTaskRegistered(Context context, String taskId) {
+        if (taskId == null || taskId.trim().length() == 0) {
+            return false;
+        }
+        Set<String> registered = prefs(context).getStringSet(
+                KEY_CLOUD_TASK_IDS,
+                Collections.<String>emptySet());
+        return registered.contains(taskId.trim());
     }
 
     public boolean isEnabled() {
