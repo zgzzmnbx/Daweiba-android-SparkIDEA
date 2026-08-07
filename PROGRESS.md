@@ -6,5 +6,5 @@
 - 任务0/1完成：基线锁定；UI 专项测试旧实现 exit=1，修复后 tokens/contrast/migration/touch/masking/XML/IDs exit=0。
 - 任务2完成：双主题、旧偏好迁移、Lucide 图标、首页/历史/待办/设置/快速捕捉/弹窗/组件已统一重绘。
 - 回归完成：五个既有脚本均 exit=0；故障注入 UI 对比度 exit=1，恢复后 exit=0；git diff --check exit=0。
-- 构建完成：v52/0.6.0-shadcn-rhea-ui，签名 v1/v2/v3 全通过；任务3正在做暂存、提交和推送。
+- 构建/交付完成：v52/0.6.0-shadcn-rhea-ui，签名 v1/v2/v3 全通过；56 个白名单文件已提交 02ed227 并推送 origin/master。
 - 阻塞：两次 adb 安装均为 INSTALL_FAILED_ABORTED/User rejected permissions，真机浅深截图未生成，证据在 BLOCKED.md。
