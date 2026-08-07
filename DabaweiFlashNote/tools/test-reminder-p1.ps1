@@ -144,6 +144,8 @@ foreach ($marker in @(
   "saveAutomaticReminder",
   "p1_natural_time_scheduled",
   "requestReminderPermissions",
+  "getCandidates().size() <= 1",
+  "p1_natural_time_conflict",
   "showPreAlertPicker",
   "savePreAlerts",
   "PRE_ALERTS"
@@ -165,6 +167,9 @@ foreach ($marker in @(
 
 if ($mainActivity -match 'p1_natural_time_auto_message|p1_natural_time_undo|p1_natural_time_modify') {
   throw "Automatic reminder flow must not show the removed confirmation dialog"
+}
+if ($mainActivity -match 'setMessage\(R\.string\.reminder_add\)') {
+  throw "Ordinary todos must not show a reminder prompt"
 }
 
 if ($build -notmatch '\$versionCode\s*=\s*"52"' -or $build -notmatch '\$versionName\s*=\s*"0\.52-feishu-card-silent-reminder"') {

@@ -333,12 +333,12 @@ public class MainActivity extends Activity {
                 saveAutomaticReminder(ReminderTarget.forLocalNote(savedTodo), parsed);
                 return;
             }
-            final boolean conflict = parsed.getCandidates().size() > 1;
+            if (parsed.getCandidates().size() <= 1) {
+                return;
+            }
             new AlertDialog.Builder(this)
-                    .setTitle(conflict ? R.string.p1_natural_time_title : R.string.todo_badge)
-                    .setMessage(conflict
-                            ? R.string.p1_natural_time_conflict
-                            : R.string.reminder_add)
+                    .setTitle(R.string.p1_natural_time_title)
+                    .setMessage(R.string.p1_natural_time_conflict)
                     .setNegativeButton(R.string.cancel, null)
                     .setPositiveButton(R.string.reminder_add, new DialogInterface.OnClickListener() {
                         @Override
