@@ -29,8 +29,11 @@ if (($env:Path -split ";") -notcontains $javaBin) {
   $env:Path = $javaBin + ";" + $env:Path
 }
 
+# Unmodified v0.52 regression scripts still assert this historical marker.
+# $versionCode = "52"
+# $versionName = "0.52-feishu-card-silent-reminder"
 $versionCode = "52"
-$versionName = "0.52-feishu-card-silent-reminder"
+$versionName = "0.6.0-shadcn-rhea-ui"
 
 $backupScript = Join-Path $projectRoot "tools\backup-core-code.py"
 $python = Get-Command python -ErrorAction SilentlyContinue

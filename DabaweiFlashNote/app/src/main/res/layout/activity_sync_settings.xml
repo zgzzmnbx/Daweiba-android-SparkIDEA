@@ -1,263 +1,432 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/settingsScroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/screen_background">
+    android:background="@color/background"
+    android:clipToPadding="false">
 
     <LinearLayout
+        android:id="@+id/settingsRoot"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingLeft="18dp"
-        android:paddingTop="34dp"
-        android:paddingRight="18dp"
-        android:paddingBottom="18dp">
+        android:paddingLeft="16dp"
+        android:paddingTop="16dp"
+        android:paddingRight="16dp"
+        android:paddingBottom="24dp">
 
         <TextView
+            android:id="@+id/settingsTitle"
             android:layout_width="match_parent"
-            android:layout_height="54dp"
-            android:gravity="center_vertical"
+            android:layout_height="wrap_content"
+            android:includeFontPadding="false"
             android:text="@string/settings_title"
-            android:textColor="@color/primary_text"
-            android:textSize="25sp"
+            android:textColor="@color/foreground"
+            android:textSize="24sp"
             android:textStyle="bold" />
 
         <TextView
+            android:id="@+id/settingsSubtitle"
             android:layout_width="match_parent"
-            android:layout_height="28dp"
-            android:layout_marginTop="8dp"
-            android:gravity="bottom"
-            android:text="@string/theme_select"
-            android:textColor="@color/secondary_text"
-            android:textSize="14sp" />
-
-        <Spinner
-            android:id="@+id/themeSpinner"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:background="@drawable/input_background"
-            android:paddingLeft="12dp"
-            android:paddingRight="12dp" />
-
-        <CheckBox
-            android:id="@+id/claudeFontStyle"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="8dp"
-            android:text="@string/claude_font_style"
-            android:textColor="@color/primary_text"
-            android:textSize="16sp" />
-
-        <Button
-            android:id="@+id/exportButton"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="10dp"
-            android:backgroundTint="@color/accent_green"
-            android:text="@string/export_markdown"
-            android:textColor="@android:color/white"
-            android:textSize="17sp"
-            android:textStyle="bold" />
-
-        <Button
-            android:id="@+id/reminderNotificationSettingsButton"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="8dp"
-            android:text="@string/reminder_notification_settings"
-            android:textSize="15sp" />
-
-        <Button
-            android:id="@+id/reminderExactSettingsButton"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="4dp"
-            android:text="@string/reminder_exact_settings"
-            android:textSize="15sp" />
-
-        <CheckBox
-            android:id="@+id/dailyOverviewEnabled"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="12dp"
-            android:text="@string/p1_daily_overview"
-            android:textColor="@color/primary_text"
-            android:textSize="16sp" />
-
-        <Button
-            android:id="@+id/dailyOverviewTimeButton"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="2dp"
-            android:textSize="15sp" />
-
-        <CheckBox
-            android:id="@+id/backgroundSyncEnabled"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:text="@string/p1_background_sync"
-            android:textColor="@color/primary_text"
-            android:textSize="16sp" />
-
-        <CheckBox
-            android:id="@+id/lockscreenPrivate"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:text="@string/p1_lock_screen_private"
-            android:textColor="@color/primary_text"
-            android:textSize="16sp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="28dp"
-            android:layout_marginTop="12dp"
-            android:gravity="bottom"
-            android:text="@string/feishu_push_title"
-            android:textColor="@color/secondary_text"
-            android:textSize="14sp" />
-
-        <CheckBox
-            android:id="@+id/feishuPushEnabled"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:text="@string/feishu_push_enabled"
-            android:textColor="@color/primary_text"
-            android:textSize="16sp" />
-
-        <EditText
-            android:id="@+id/feishuWebhookUrl"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="4dp"
-            android:background="@drawable/input_background"
-            android:hint="@string/feishu_webhook_hint"
-            android:inputType="textUri"
-            android:padding="12dp"
-            android:singleLine="true"
-            android:textColor="@color/primary_text"
-            android:textColorHint="@color/secondary_text" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:lineSpacingExtra="2dp"
-            android:text="@string/feishu_webhook_help"
-            android:textColor="@color/secondary_text"
-            android:textSize="12sp" />
-
-        <TextView
-            android:id="@+id/reminderDiagnostics"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/input_background"
-            android:lineSpacingExtra="3dp"
-            android:padding="12dp"
-            android:textColor="@color/secondary_text"
+            android:text="@string/settings_subtitle"
+            android:textColor="@color/muted_foreground"
             android:textSize="13sp" />
 
-        <Button
-            android:id="@+id/refreshReminderDiagnosticsButton"
+        <TextView
+            android:id="@+id/appearanceSection"
             android:layout_width="match_parent"
-            android:layout_height="44dp"
-            android:layout_marginTop="4dp"
-            android:text="@string/p1_refresh_diagnostics"
-            android:textSize="14sp" />
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/appearance_section"
+            android:textColor="@color/muted_foreground"
+            android:textSize="12sp"
+            android:textStyle="bold" />
 
-        <CheckBox
-            android:id="@+id/syncEnabled"
+        <LinearLayout
+            android:id="@+id/appearanceCard"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:text="@string/sync_enabled"
-            android:textColor="@color/primary_text"
-            android:textSize="16sp" />
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/note_item_background"
+            android:orientation="vertical"
+            android:paddingLeft="14dp"
+            android:paddingTop="12dp"
+            android:paddingRight="14dp"
+            android:paddingBottom="10dp">
 
-        <EditText
-            android:id="@+id/webdavBaseUrl"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="10dp"
-            android:background="@drawable/input_background"
-            android:hint="@string/webdav_base_url"
-            android:inputType="textUri"
-            android:padding="12dp"
-            android:singleLine="true"
-            android:textColor="@color/primary_text"
-            android:textColorHint="@color/secondary_text" />
+            <TextView
+                android:id="@+id/themeSelectLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/theme_select"
+                android:textColor="@color/foreground"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
-        <EditText
-            android:id="@+id/webdavUsername"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="10dp"
-            android:background="@drawable/input_background"
-            android:hint="@string/webdav_username"
-            android:inputType="textEmailAddress"
-            android:padding="12dp"
-            android:singleLine="true"
-            android:textColor="@color/primary_text"
-            android:textColorHint="@color/secondary_text" />
+            <Spinner
+                android:id="@+id/themeSpinner"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/input_background"
+                android:minHeight="48dp"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp" />
 
-        <EditText
-            android:id="@+id/webdavPassword"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="10dp"
-            android:background="@drawable/input_background"
-            android:hint="@string/webdav_password"
-            android:inputType="textPassword"
-            android:padding="12dp"
-            android:singleLine="true"
-            android:textColor="@color/primary_text"
-            android:textColorHint="@color/secondary_text" />
+            <TextView
+                android:id="@+id/themeHelp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="@string/theme_help"
+                android:textColor="@color/muted_foreground"
+                android:textSize="12sp" />
 
-        <EditText
-            android:id="@+id/webdavRemotePath"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="10dp"
-            android:background="@drawable/input_background"
-            android:hint="@string/webdav_remote_path"
-            android:inputType="textUri"
-            android:padding="12dp"
-            android:singleLine="true"
-            android:textColor="@color/primary_text"
-            android:textColorHint="@color/secondary_text" />
+            <Switch
+                android:id="@+id/claudeFontStyle"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:minHeight="48dp"
+                android:text="@string/claude_font_style"
+                android:textColor="@color/foreground"
+                android:textSize="14sp" />
 
-        <EditText
-            android:id="@+id/webdavAnchor"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="10dp"
-            android:background="@drawable/input_background"
-            android:hint="@string/webdav_anchor"
-            android:inputType="text"
-            android:padding="12dp"
-            android:singleLine="true"
-            android:textColor="@color/primary_text"
-            android:textColorHint="@color/secondary_text" />
+            <TextView
+                android:id="@+id/fontHelp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="4dp"
+                android:text="@string/font_help"
+                android:textColor="@color/muted_foreground"
+                android:textSize="12sp" />
+        </LinearLayout>
 
-        <Button
-            android:id="@+id/saveSyncSettingsButton"
+        <TextView
+            android:id="@+id/reminderSection"
             android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="16dp"
-            android:backgroundTint="@color/accent_green_dark"
-            android:text="@string/save_settings"
-            android:textColor="@android:color/white"
-            android:textSize="18sp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/reminder_section"
+            android:textColor="@color/muted_foreground"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:id="@+id/reminderCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/note_item_background"
+            android:orientation="vertical"
+            android:paddingLeft="14dp"
+            android:paddingTop="6dp"
+            android:paddingRight="14dp"
+            android:paddingBottom="12dp">
+
+            <Switch
+                android:id="@+id/dailyOverviewEnabled"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:minHeight="48dp"
+                android:text="@string/p1_daily_overview"
+                android:textColor="@color/foreground"
+                android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/dailyOverviewTimeButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:minHeight="48dp"
+                android:textSize="13sp" />
+
+            <Switch
+                android:id="@+id/backgroundSyncEnabled"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:minHeight="48dp"
+                android:text="@string/p1_background_sync"
+                android:textColor="@color/foreground"
+                android:textSize="14sp" />
+
+            <Switch
+                android:id="@+id/lockscreenPrivate"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:minHeight="48dp"
+                android:text="@string/p1_lock_screen_private"
+                android:textColor="@color/foreground"
+                android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/reminderNotificationSettingsButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:minHeight="48dp"
+                android:text="@string/reminder_notification_settings"
+                android:textSize="13sp" />
+
+            <Button
+                android:id="@+id/reminderExactSettingsButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:minHeight="48dp"
+                android:text="@string/reminder_exact_settings"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/reminderDiagnostics"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/input_background"
+                android:lineSpacingExtra="2dp"
+                android:padding="12dp"
+                android:textColor="@color/muted_foreground"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/refreshReminderDiagnosticsButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:minHeight="48dp"
+                android:text="@string/p1_refresh_diagnostics"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/feishuSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/feishu_section"
+            android:textColor="@color/muted_foreground"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:id="@+id/feishuCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/note_item_background"
+            android:orientation="vertical"
+            android:paddingLeft="14dp"
+            android:paddingTop="6dp"
+            android:paddingRight="14dp"
+            android:paddingBottom="12dp">
+
+            <Switch
+                android:id="@+id/feishuPushEnabled"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:minHeight="48dp"
+                android:text="@string/feishu_push_enabled"
+                android:textColor="@color/foreground"
+                android:textSize="14sp" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="4dp">
+                <EditText
+                    android:id="@+id/feishuWebhookUrl"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/input_background"
+                    android:hint="@string/feishu_webhook_hint"
+                    android:inputType="textPassword"
+                    android:paddingLeft="12dp"
+                    android:paddingRight="52dp"
+                    android:singleLine="true"
+                    android:textColor="@color/foreground"
+                    android:textColorHint="@color/muted_foreground" />
+                <ImageButton
+                    android:id="@+id/feishuWebhookToggle"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="right|center_vertical"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="@string/show_secret"
+                    android:minWidth="48dp"
+                    android:minHeight="48dp"
+                    android:padding="12dp"
+                    android:src="@drawable/ic_eye_off" />
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/feishuHelp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="@string/feishu_help"
+                android:textColor="@color/muted_foreground"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/syncDataSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/sync_data_section"
+            android:textColor="@color/muted_foreground"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:id="@+id/syncDataCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/note_item_background"
+            android:orientation="vertical"
+            android:paddingLeft="14dp"
+            android:paddingTop="6dp"
+            android:paddingRight="14dp"
+            android:paddingBottom="12dp">
+
+            <Switch
+                android:id="@+id/syncEnabled"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:minHeight="48dp"
+                android:text="@string/sync_enabled"
+                android:textColor="@color/foreground"
+                android:textSize="14sp" />
+
+            <EditText
+                android:id="@+id/webdavBaseUrl"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/input_background"
+                android:hint="@string/webdav_base_url"
+                android:inputType="textUri"
+                android:padding="12dp"
+                android:singleLine="true"
+                android:textColor="@color/foreground"
+                android:textColorHint="@color/muted_foreground" />
+
+            <EditText
+                android:id="@+id/webdavUsername"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/input_background"
+                android:hint="@string/webdav_username"
+                android:inputType="textEmailAddress"
+                android:padding="12dp"
+                android:singleLine="true"
+                android:textColor="@color/foreground"
+                android:textColorHint="@color/muted_foreground" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="8dp">
+                <EditText
+                    android:id="@+id/webdavPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/input_background"
+                    android:hint="@string/webdav_password"
+                    android:inputType="textPassword"
+                    android:paddingLeft="12dp"
+                    android:paddingRight="52dp"
+                    android:singleLine="true"
+                    android:textColor="@color/foreground"
+                    android:textColorHint="@color/muted_foreground" />
+                <ImageButton
+                    android:id="@+id/webdavPasswordToggle"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="right|center_vertical"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="@string/show_secret"
+                    android:minWidth="48dp"
+                    android:minHeight="48dp"
+                    android:padding="12dp"
+                    android:src="@drawable/ic_eye_off" />
+            </FrameLayout>
+
+            <EditText
+                android:id="@+id/webdavRemotePath"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/input_background"
+                android:hint="@string/webdav_remote_path"
+                android:inputType="textUri"
+                android:padding="12dp"
+                android:singleLine="true"
+                android:textColor="@color/foreground"
+                android:textColorHint="@color/muted_foreground" />
+
+            <EditText
+                android:id="@+id/webdavAnchor"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/input_background"
+                android:hint="@string/webdav_anchor"
+                android:inputType="text"
+                android:padding="12dp"
+                android:singleLine="true"
+                android:textColor="@color/foreground"
+                android:textColorHint="@color/muted_foreground" />
+
+            <TextView
+                android:id="@+id/syncDataHelp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="@string/sync_data_help"
+                android:textColor="@color/muted_foreground"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/exportButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:minHeight="48dp"
+                android:text="@string/export_markdown"
+                android:textSize="13sp" />
+
+            <Button
+                android:id="@+id/saveSyncSettingsButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:minHeight="48dp"
+                android:text="@string/save_settings"
+                android:textColor="@color/primary_foreground"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/aboutSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/about_section"
+            android:textColor="@color/muted_foreground"
+            android:textSize="12sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/versionInfo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:gravity="center"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/note_item_background"
             android:lineSpacingExtra="3dp"
-            android:textColor="@color/secondary_text"
+            android:padding="14dp"
+            android:textColor="@color/muted_foreground"
             android:textSize="12sp" />
     </LinearLayout>
 </ScrollView>

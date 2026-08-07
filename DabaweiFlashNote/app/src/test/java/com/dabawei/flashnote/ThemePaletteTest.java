@@ -6,6 +6,9 @@ public final class ThemePaletteTest {
         cyclesThemesInOrder();
         fallsBackToPaperTheme();
         actionButtonsUseThemeColors();
+        hasOnlyThreeThemePreferences();
+        migratesLegacyThemeKeys();
+        resolvesSystemToTwoVisualThemes();
         System.out.println("ThemePalette tests passed.");
     }
 
@@ -59,6 +62,34 @@ public final class ThemePaletteTest {
         ThemePalette raycast = ThemePalette.findByKey("raycast");
         assertEquals("#342629", raycast.getSaveButtonColor(), "raycast save action");
         assertEquals("#332B22", raycast.getTodoButtonColor(), "raycast todo action");
+    }
+
+    private static void hasOnlyThreeThemePreferences() {
+        ThemePalette[] preferences = ThemePalette.preferences();
+        assertEquals(3, preferences.length, "theme preference count");
+        assertEquals("system", preferences[0].getKey(), "system preference");
+        assertEquals("light", preferences[1].getKey(), "light preference");
+        assertEquals("dark", preferences[2].getKey(), "dark preference");
+    }
+
+    private static void migratesLegacyThemeKeys() {
+        for (String key : new String[]{"paper", "forest", "apple", "notion"}) {
+            assertEquals("light", ThemePalette.migratePreference(key), key + " light migration");
+        }
+        for (String key : new String[]{"ink", "linear", "raycast", "obsidian"}) {
+            assertEquals("dark", ThemePalette.migratePreference(key), key + " dark migration");
+        }
+        assertEquals("system", ThemePalette.migratePreference(null), "missing preference defaults to system");
+        assertEquals("system", ThemePalette.migratePreference("unknown"), "unknown preference defaults to system");
+    }
+
+    private static void resolvesSystemToTwoVisualThemes() {
+        assertEquals("light", ThemePalette.resolve("system", false).getKey(), "system light resolution");
+        assertEquals("dark", ThemePalette.resolve("system", true).getKey(), "system dark resolution");
+        assertEquals("light", ThemePalette.resolve("paper", true).getKey(), "legacy light ignores system");
+        assertEquals("dark", ThemePalette.resolve("ink", false).getKey(), "legacy dark ignores system");
+        assertEquals("#FFFFFF", ThemePalette.resolve("light", true).getPrimaryButtonTextColor(), "light button text");
+        assertEquals("#F87171", ThemePalette.resolve("dark", false).getDestructiveColor(), "dark destructive token");
     }
 
     private static void assertEquals(Object expected, Object actual, String label) {

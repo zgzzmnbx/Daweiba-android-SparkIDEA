@@ -4,11 +4,16 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.app.TimePickerDialog;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Build;
 import android.provider.Settings;
 import android.net.Uri;
+import android.text.InputType;
+import android.text.method.HideReturnsTransformationMethod;
+import android.text.method.PasswordTransformationMethod;
 import android.content.pm.PackageInfo;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,7 +22,9 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,24 +37,25 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 public final class SyncSettingsActivity extends Activity {
-    private CheckBox enabled;
+    private Switch enabled;
     private EditText baseUrl;
     private EditText username;
     private EditText password;
     private EditText remotePath;
     private EditText anchor;
-    private CheckBox claudeFontStyle;
+    private Switch claudeFontStyle;
     private FlashNoteDatabase database;
     private Spinner themeSpinner;
     private Button exportButton;
-    private CheckBox dailyOverviewEnabled;
+    private Switch dailyOverviewEnabled;
     private Button dailyOverviewTimeButton;
-    private CheckBox backgroundSyncEnabled;
-    private CheckBox lockscreenPrivate;
-    private CheckBox feishuPushEnabled;
+    private Switch backgroundSyncEnabled;
+    private Switch lockscreenPrivate;
+    private Switch feishuPushEnabled;
     private EditText feishuWebhookUrl;
     private TextView reminderDiagnostics;
     private ThemePalette currentTheme;
+    private String themePreference;
 
     private static final String THEME_PREFS_NAME = "dabawei_flashnote_prefs";
     private static final String PREF_THEME_KEY = "theme_key";
@@ -76,6 +84,8 @@ public final class SyncSettingsActivity extends Activity {
         lockscreenPrivate = findViewById(R.id.lockscreenPrivate);
         feishuPushEnabled = findViewById(R.id.feishuPushEnabled);
         feishuWebhookUrl = findViewById(R.id.feishuWebhookUrl);
+        ImageButton feishuWebhookToggle = findViewById(R.id.feishuWebhookToggle);
+        ImageButton webdavPasswordToggle = findViewById(R.id.webdavPasswordToggle);
         reminderDiagnostics = findViewById(R.id.reminderDiagnostics);
         Button refreshReminderDiagnostics = findViewById(R.id.refreshReminderDiagnosticsButton);
         TextView versionInfo = findViewById(R.id.versionInfo);
@@ -98,11 +108,15 @@ public final class SyncSettingsActivity extends Activity {
         refreshReminderDiagnostics();
 
         SharedPreferences themePrefs = getSharedPreferences(THEME_PREFS_NAME, MODE_PRIVATE);
-        currentTheme = ThemePalette.findByKey(themePrefs.getString(PREF_THEME_KEY, "paper"));
+        themePreference = loadThemePreference(themePrefs);
+        currentTheme = ThemePalette.resolve(themePreference, isSystemDark());
         claudeFontStyle.setChecked(themePrefs.getBoolean(PREF_CLAUDE_FONT_KEY, false));
         bindThemeSpinner();
         bindVersionInfo(versionInfo);
         applyFontStyle(claudeFontStyle.isChecked());
+        bindSecretToggle(webdavPasswordToggle, password);
+        bindSecretToggle(feishuWebhookToggle, feishuWebhookUrl);
+        applyTheme(currentTheme);
 
         reminderNotificationSettings.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -254,6 +268,9 @@ public final class SyncSettingsActivity extends Activity {
         if (reminderDiagnostics != null) {
             refreshReminderDiagnostics();
         }
+        if (currentTheme != null) {
+            applyTheme(currentTheme);
+        }
     }
 
     private void updateDailyOverviewTimeLabel() {
@@ -264,6 +281,164 @@ public final class SyncSettingsActivity extends Activity {
                 R.string.p1_daily_overview_time,
                 ReminderSettings.getDailyOverviewHour(this),
                 ReminderSettings.getDailyOverviewMinute(this)));
+    }
+
+    private String loadThemePreference(SharedPreferences prefs) {
+        String stored = prefs.getString(PREF_THEME_KEY, "system");
+        String migrated = ThemePalette.migratePreference(stored);
+        if (!migrated.equals(stored)) {
+            prefs.edit().putString(PREF_THEME_KEY, migrated).apply();
+        }
+        return migrated;
+    }
+
+    private boolean isSystemDark() {
+        return (getResources().getConfiguration().uiMode
+                & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
+                == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+    }
+
+    private void bindSecretToggle(final ImageButton toggle, final EditText field) {
+        if (toggle == null || field == null) {
+            return;
+        }
+        field.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        field.setTransformationMethod(PasswordTransformationMethod.getInstance());
+        toggle.setOnClickListener(new View.OnClickListener() {
+            private boolean visible;
+
+            @Override
+            public void onClick(View view) {
+                int selection = field.getSelectionStart();
+                visible = !visible;
+                if (visible) {
+                    field.setTransformationMethod(HideReturnsTransformationMethod.getInstance());
+                    toggle.setImageResource(R.drawable.ic_eye);
+                    toggle.setContentDescription(getString(R.string.hide_secret));
+                } else {
+                    field.setTransformationMethod(PasswordTransformationMethod.getInstance());
+                    toggle.setImageResource(R.drawable.ic_eye_off);
+                    toggle.setContentDescription(getString(R.string.show_secret));
+                }
+                if (selection >= 0 && selection <= field.length()) {
+                    field.setSelection(selection);
+                }
+            }
+        });
+    }
+
+    private void applyTheme(ThemePalette theme) {
+        int screen = Color.parseColor(theme.getScreenColor());
+        int surface = Color.parseColor(theme.getSurfaceColor());
+        int input = Color.parseColor(theme.getInputColor());
+        int primary = Color.parseColor(theme.getPrimaryTextColor());
+        int secondary = Color.parseColor(theme.getSecondaryTextColor());
+        int accentDark = Color.parseColor(theme.getAccentDarkColor());
+        int border = Color.parseColor(theme.getBorderColor());
+        int secondaryButton = Color.parseColor(theme.getSaveButtonColor());
+        int secondaryButtonText = Color.parseColor(theme.getSaveButtonTextColor());
+        int primaryButtonText = Color.parseColor(theme.getPrimaryButtonTextColor());
+
+        View root = findViewById(R.id.settingsRoot);
+        root.setBackgroundColor(screen);
+        for (int cardId : new int[]{
+                R.id.appearanceCard, R.id.reminderCard, R.id.feishuCard, R.id.syncDataCard, R.id.versionInfo}) {
+            View card = findViewById(cardId);
+            if (card != null) {
+                card.setBackground(makeRoundedBackground(surface, border, 10));
+            }
+        }
+        for (int textId : new int[]{
+                R.id.settingsTitle, R.id.themeSelectLabel, R.id.claudeFontStyle,
+                R.id.dailyOverviewEnabled, R.id.backgroundSyncEnabled, R.id.lockscreenPrivate,
+                R.id.feishuPushEnabled, R.id.syncEnabled}) {
+            View view = findViewById(textId);
+            if (view instanceof TextView) {
+                ((TextView) view).setTextColor(primary);
+            }
+        }
+        for (int mutedId : new int[]{
+                R.id.settingsSubtitle, R.id.appearanceSection, R.id.reminderSection, R.id.feishuSection,
+                R.id.syncDataSection, R.id.aboutSection, R.id.themeHelp, R.id.fontHelp, R.id.reminderDiagnostics,
+                R.id.feishuHelp, R.id.syncDataHelp, R.id.versionInfo}) {
+            View view = findViewById(mutedId);
+            if (view instanceof TextView) {
+                ((TextView) view).setTextColor(secondary);
+            }
+        }
+        styleField(baseUrl, theme, input, border, primary, secondary);
+        styleField(username, theme, input, border, primary, secondary);
+        styleField(password, theme, input, border, primary, secondary);
+        styleField(remotePath, theme, input, border, primary, secondary);
+        styleField(anchor, theme, input, border, primary, secondary);
+        styleField(feishuWebhookUrl, theme, input, border, primary, secondary);
+        themeSpinner.setBackground(makeRoundedBackground(input, border, 10));
+        if (themeSpinner.getSelectedView() instanceof TextView) {
+            ((TextView) themeSpinner.getSelectedView()).setTextColor(primary);
+        }
+        styleButton(findViewById(R.id.dailyOverviewTimeButton), secondaryButton, secondaryButtonText, border);
+        styleButton(findViewById(R.id.reminderNotificationSettingsButton), secondaryButton, secondaryButtonText, border);
+        styleButton(findViewById(R.id.reminderExactSettingsButton), secondaryButton, secondaryButtonText, border);
+        styleButton(findViewById(R.id.refreshReminderDiagnosticsButton), secondaryButton, secondaryButtonText, border);
+        styleButton(exportButton, secondaryButton, secondaryButtonText, border);
+        styleButton(findViewById(R.id.saveSyncSettingsButton), accentDark, primaryButtonText, Color.TRANSPARENT);
+        tintSecretButton(findViewById(R.id.webdavPasswordToggle), secondary);
+        tintSecretButton(findViewById(R.id.feishuWebhookToggle), secondary);
+        if (Build.VERSION.SDK_INT >= 21) {
+            getWindow().setStatusBarColor(screen);
+            getWindow().setNavigationBarColor(screen);
+            int flags = "dark".equals(theme.getKey()) ? 0 : View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            if (Build.VERSION.SDK_INT >= 26 && !"dark".equals(theme.getKey())) {
+                flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            }
+            getWindow().getDecorView().setSystemUiVisibility(flags);
+        }
+    }
+
+    private void tintSecretButton(ImageButton button, int color) {
+        if (button != null) {
+            button.setColorFilter(color);
+            if (Build.VERSION.SDK_INT >= 21) {
+                button.setStateListAnimator(null);
+                button.setElevation(0f);
+            }
+        }
+    }
+
+    private void styleField(EditText field, ThemePalette theme, int background, int border, int text, int hint) {
+        field.setBackground(makeRoundedBackground(background, border, 10));
+        field.setTextColor(text);
+        field.setHintTextColor(hint);
+    }
+
+    private void styleButton(View view, int background, int text, int border) {
+        if (!(view instanceof Button)) {
+            return;
+        }
+        Button button = (Button) view;
+        button.setBackground(makeRoundedBackground(background, border, 10));
+        button.setTextColor(text);
+        button.setAllCaps(false);
+        button.setIncludeFontPadding(false);
+        if (Build.VERSION.SDK_INT >= 21) {
+            button.setStateListAnimator(null);
+            button.setElevation(0f);
+            button.setTranslationZ(0f);
+        }
+    }
+
+    private GradientDrawable makeRoundedBackground(int fillColor, int strokeColor, int radiusDp) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(fillColor);
+        drawable.setCornerRadius(dp(radiusDp));
+        if (strokeColor != Color.TRANSPARENT) {
+            drawable.setStroke(Math.max(1, Math.round(dp(1))), strokeColor);
+        }
+        return drawable;
+    }
+
+    private float dp(float value) {
+        return value * getResources().getDisplayMetrics().density;
     }
 
     private void refreshReminderDiagnostics() {
@@ -323,12 +498,12 @@ public final class SyncSettingsActivity extends Activity {
     }
 
     private void bindThemeSpinner() {
-        final ThemePalette[] themes = ThemePalette.all();
+        final ThemePalette[] themes = ThemePalette.preferences();
         String[] labels = new String[themes.length];
         int selectedIndex = 0;
         for (int i = 0; i < themes.length; i++) {
             labels[i] = themes[i].getLabel();
-            if (themes[i].getKey().equals(currentTheme.getKey())) {
+            if (themes[i].getKey().equals(themePreference)) {
                 selectedIndex = i;
             }
         }
@@ -343,11 +518,13 @@ public final class SyncSettingsActivity extends Activity {
         themeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                currentTheme = themes[position];
+                themePreference = themes[position].getKey();
+                currentTheme = ThemePalette.resolve(themePreference, isSystemDark());
                 getSharedPreferences(THEME_PREFS_NAME, MODE_PRIVATE)
                         .edit()
-                        .putString(PREF_THEME_KEY, currentTheme.getKey())
+                        .putString(PREF_THEME_KEY, themePreference)
                         .apply();
+                applyTheme(currentTheme);
             }
 
             @Override

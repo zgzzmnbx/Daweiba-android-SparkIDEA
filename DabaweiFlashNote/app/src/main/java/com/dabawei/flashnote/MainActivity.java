@@ -84,7 +84,10 @@ public class MainActivity extends Activity {
     private TextView todoPageTitle;
     private TextView todoEmptyTitle;
     private TextView todoEmptyMessage;
-    private TextView searchIcon;
+    private TextView todoLoading;
+    private TextView historyEmptyTitle;
+    private TextView historyEmptyMessage;
+    private ImageView searchIcon;
     private View navHome;
     private View navTags;
     private View navStats;
@@ -156,6 +159,9 @@ public class MainActivity extends Activity {
         todoPageTitle = findViewById(R.id.todoPageTitle);
         todoEmptyTitle = findViewById(R.id.todoEmptyTitle);
         todoEmptyMessage = findViewById(R.id.todoEmptyMessage);
+        todoLoading = findViewById(R.id.todoLoading);
+        historyEmptyTitle = findViewById(R.id.historyEmptyTitle);
+        historyEmptyMessage = findViewById(R.id.historyEmptyMessage);
         searchIcon = findViewById(R.id.searchIcon);
         navHome = findViewById(R.id.navHome);
         navTags = findViewById(R.id.navTags);
@@ -185,7 +191,7 @@ public class MainActivity extends Activity {
         todoList.setAdapter(todoAdapter);
 
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        currentTheme = ThemePalette.findByKey(prefs.getString(PREF_THEME_KEY, "paper"));
+        currentTheme = loadThemePreference(prefs);
         claudeFontEnabled = prefs.getBoolean(PREF_CLAUDE_FONT_KEY, false);
         applyTheme(currentTheme);
 
@@ -280,7 +286,7 @@ public class MainActivity extends Activity {
         super.onResume();
         if (noteAdapter != null) {
             SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-            currentTheme = ThemePalette.findByKey(prefs.getString(PREF_THEME_KEY, "paper"));
+            currentTheme = loadThemePreference(prefs);
             claudeFontEnabled = prefs.getBoolean(PREF_CLAUDE_FONT_KEY, false);
             applyTheme(currentTheme);
             refreshNotes();
@@ -360,6 +366,10 @@ public class MainActivity extends Activity {
             return;
         }
         todoSyncing = true;
+        todoLoading.setVisibility(View.VISIBLE);
+        todoList.setVisibility(View.GONE);
+        todoEmptyTitle.setVisibility(View.GONE);
+        todoEmptyMessage.setVisibility(View.GONE);
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -371,6 +381,7 @@ public class MainActivity extends Activity {
                     @Override
                     public void run() {
                         todoSyncing = false;
+                        todoLoading.setVisibility(View.GONE);
                         if (result.isSuccess()) {
                             autoConflictTaskIds.clear();
                             if (result.getSummary() != null) {
@@ -389,6 +400,11 @@ public class MainActivity extends Activity {
                                     successMessage,
                                     Toast.LENGTH_LONG).show();
                         } else {
+                            todoList.setVisibility(View.GONE);
+                            todoEmptyTitle.setText(R.string.todo_sync_failed);
+                            todoEmptyMessage.setText(result.getMessage());
+                            todoEmptyTitle.setVisibility(View.VISIBLE);
+                            todoEmptyMessage.setVisibility(View.VISIBLE);
                             Toast.makeText(
                                     MainActivity.this,
                                     getString(R.string.todo_sync_failed, result.getMessage()),
@@ -402,7 +418,10 @@ public class MainActivity extends Activity {
 
     private void showTodoItems(List<TodoSyncItem> items) {
         todoAdapter.setItems(items == null ? Collections.<TodoSyncItem>emptyList() : items);
+        todoLoading.setVisibility(View.GONE);
         boolean hasItems = items != null && !items.isEmpty();
+        todoEmptyTitle.setText(R.string.todo_empty_title);
+        todoEmptyMessage.setText(R.string.todo_empty_message);
         todoList.setVisibility(hasItems ? View.VISIBLE : View.GONE);
         todoEmptyTitle.setVisibility(hasItems ? View.GONE : View.VISIBLE);
         todoEmptyMessage.setVisibility(hasItems ? View.GONE : View.VISIBLE);
@@ -819,7 +838,14 @@ public class MainActivity extends Activity {
 
     private void refreshNotes() {
         String keyword = currentPage == PAGE_HISTORY ? searchInput.getText().toString() : "";
-        noteAdapter.setNotes(database.searchNotes(keyword));
+        List<FlashNote> visibleNotes = database.searchNotes(keyword);
+        noteAdapter.setNotes(visibleNotes);
+        boolean historyEmpty = currentPage == PAGE_HISTORY && visibleNotes.isEmpty();
+        historyEmptyTitle.setVisibility(historyEmpty ? View.VISIBLE : View.GONE);
+        historyEmptyMessage.setVisibility(historyEmpty ? View.VISIBLE : View.GONE);
+        if (currentPage != PAGE_TODO) {
+            noteList.setVisibility(historyEmpty ? View.GONE : View.VISIBLE);
+        }
         int pendingCount = database.getPendingNotes().size();
         if (pendingCount == 0) {
             syncStatus.setText(getString(R.string.synced_badge));
@@ -1072,6 +1098,18 @@ public class MainActivity extends Activity {
         }, 200);
     }
 
+    private ThemePalette loadThemePreference(SharedPreferences prefs) {
+        String stored = prefs.getString(PREF_THEME_KEY, "system");
+        String migrated = ThemePalette.migratePreference(stored);
+        if (!migrated.equals(stored)) {
+            prefs.edit().putString(PREF_THEME_KEY, migrated).apply();
+        }
+        boolean systemIsDark = (getResources().getConfiguration().uiMode
+                & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
+                == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+        return ThemePalette.resolve(migrated, systemIsDark);
+    }
+
     private void applyTheme(ThemePalette theme) {
         int screen = Color.parseColor(theme.getScreenColor());
         int surface = Color.parseColor(theme.getSurfaceColor());
@@ -1085,6 +1123,7 @@ public class MainActivity extends Activity {
         int todoAction = Color.parseColor(theme.getTodoButtonColor());
         int saveActionText = Color.parseColor(theme.getSaveButtonTextColor());
         int todoActionText = Color.parseColor(theme.getTodoButtonTextColor());
+        int primaryButtonText = Color.parseColor(theme.getPrimaryButtonTextColor());
 
         applyPageVisibility();
         pullRoot.setBackgroundColor(screen);
@@ -1095,23 +1134,26 @@ public class MainActivity extends Activity {
         styleLogoTitle(appTitle, claudeFontEnabled);
         syncStatus.setTextColor(accent);
         historyTitle.setTextColor(secondary);
-        searchIcon.setTextColor(secondary);
+        searchIcon.setColorFilter(secondary);
 
-        stylePanel(searchPanel, input, border, 14);
-        stylePanel(noteInputPanel, input, border, 16);
-        styleButton(saveButton, saveAction, saveActionText, 14);
-        styleButton(saveTodoButton, todoAction, todoActionText, 14);
-        styleButton(recordButton, accentDark, Color.WHITE, 14);
-        styleBottomNav(bottomNav, screen);
+        stylePanel(searchPanel, input, border, 10);
+        stylePanel(noteInputPanel, input, border, 12);
+        styleButton(saveButton, saveAction, saveActionText, border, 10);
+        styleButton(saveTodoButton, todoAction, todoActionText, border, 10);
+        styleButton(recordButton, accentDark, primaryButtonText, Color.TRANSPARENT, 10);
+        styleBottomNav(bottomNav, surface, border);
         styleNavItem(navHome, navHomeIcon, navHomeLabel, currentPage == PAGE_HOME ? accentDark : secondary, currentPage == PAGE_HOME);
         styleNavItem(navTags, navTagsIcon, navTagsLabel, currentPage == PAGE_HISTORY ? accentDark : secondary, currentPage == PAGE_HISTORY);
         styleNavItem(navStats, navStatsIcon, navStatsLabel, currentPage == PAGE_TODO ? accentDark : secondary, currentPage == PAGE_TODO);
         styleNavItem(navMine, navMineIcon, navMineLabel, secondary, false);
         styleIconButton(uploadImageButton, secondary);
         styleIconButton(clipboardButton, secondary);
-        todoPageTitle.setTextColor(secondary);
+        todoPageTitle.setTextColor(primary);
         todoEmptyTitle.setTextColor(primary);
         todoEmptyMessage.setTextColor(secondary);
+        todoLoading.setTextColor(secondary);
+        historyEmptyTitle.setTextColor(primary);
+        historyEmptyMessage.setTextColor(secondary);
         pullIndicatorIcon.setColorFilter(accentDark);
         pullIndicatorText.setTextColor(accentDark);
         updatePullPrompt();
@@ -1121,7 +1163,7 @@ public class MainActivity extends Activity {
         noteInput.setHintTextColor(withAlpha(secondary, 82));
         saveButton.setText(getString(R.string.save_note));
         saveTodoButton.setText(getString(R.string.save_todo));
-        setStartIcon(recordButton, R.drawable.ic_top_sync, Color.WHITE, 18);
+        setStartIcon(recordButton, R.drawable.ic_top_sync, primaryButtonText, 18);
         setStartIcon(saveButton, R.drawable.ic_action_save, saveActionText, 18);
         setStartIcon(saveTodoButton, R.drawable.ic_action_todo, todoActionText, 18);
         setStartIcon(syncStatus, R.drawable.ic_status_synced, accent, 15);
@@ -1136,7 +1178,10 @@ public class MainActivity extends Activity {
             getWindow().setStatusBarColor(screen);
             getWindow().setNavigationBarColor(screen);
             if (android.os.Build.VERSION.SDK_INT >= 23) {
-                int flags = "ink".equals(theme.getKey()) ? 0 : View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+                int flags = "dark".equals(theme.getKey()) ? 0 : View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+                if (android.os.Build.VERSION.SDK_INT >= 26 && !"dark".equals(theme.getKey())) {
+                    flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+                }
                 getWindow().getDecorView().setSystemUiVisibility(flags);
             }
         }
@@ -1462,14 +1507,14 @@ public class MainActivity extends Activity {
         return Color.argb(alpha, Color.red(color), Color.green(color), Color.blue(color));
     }
 
-    private void styleButton(Button button, int backgroundColor, int textColor, int radiusDp) {
+    private void styleButton(Button button, int backgroundColor, int textColor, int borderColor, int radiusDp) {
         if (android.os.Build.VERSION.SDK_INT >= 21) {
             button.setBackgroundTintList(null);
             button.setStateListAnimator(null);
             button.setElevation(0f);
             button.setTranslationZ(0f);
         }
-        button.setBackground(makeRoundedBackground(backgroundColor, Color.TRANSPARENT, radiusDp));
+        button.setBackground(makeRoundedBackground(backgroundColor, borderColor, radiusDp));
         button.setTextColor(textColor);
         button.setAllCaps(false);
         button.setIncludeFontPadding(false);
@@ -1513,8 +1558,8 @@ public class MainActivity extends Activity {
     }
 
     private void applySafeAreaPadding() {
-        int topPadding = getStatusBarHeight() + Math.round(dp(18));
-        rootLayout.setPadding(Math.round(dp(22)), topPadding, Math.round(dp(22)), Math.round(dp(10)));
+        int topPadding = getStatusBarHeight() + Math.round(dp(16));
+        rootLayout.setPadding(Math.round(dp(16)), topPadding, Math.round(dp(16)), Math.round(dp(10)));
     }
 
     private int getStatusBarHeight() {
@@ -1536,8 +1581,8 @@ public class MainActivity extends Activity {
         button.setColorFilter(iconColor);
     }
 
-    private void styleBottomNav(View nav, int backgroundColor) {
-        nav.setBackground(makeRoundedBackground(backgroundColor, Color.TRANSPARENT, 22));
+    private void styleBottomNav(View nav, int backgroundColor, int borderColor) {
+        nav.setBackground(makeRoundedBackground(backgroundColor, borderColor, 12));
     }
 
     private void styleNavItem(View item, ImageView icon, TextView label, int color, boolean active) {
@@ -1982,13 +2027,20 @@ public class MainActivity extends Activity {
                     Color.parseColor(theme.getSurfaceColor()),
                     Color.parseColor(theme.getBorderColor()),
                     "paper".equals(theme.getKey()) ? 12 : 8));
-            holder.timelineLine.setBackgroundColor(Color.parseColor("paper".equals(theme.getKey()) ? "#D6DDD7" : theme.getBorderColor()));
+            holder.timelineLine.setBackgroundColor(Color.parseColor(theme.getBorderColor()));
             holder.timelineDot.setBackground(makeRoundedBackground(Color.parseColor(theme.getAccentDarkColor()), Color.TRANSPARENT, 8));
+            holder.syncBadge.setBackground(makeRoundedBackground(
+                    Color.parseColor(theme.getSuccessColor()), Color.TRANSPARENT, 999));
+            holder.todoBadge.setBackground(makeRoundedBackground(
+                    Color.parseColor(theme.getAccentColor()), Color.TRANSPARENT, 999));
+            holder.reminderBadge.setBackground(makeRoundedBackground(
+                    Color.parseColor(theme.getWarningColor()), Color.TRANSPARENT, 999));
             setElevationDp(holder.noteCard, 0);
             holder.content.setText(note.getContent());
             holder.time.setText(dateTimeFormat.format(new Date(note.getCreatedAtMillis())));
             holder.syncBadge.setVisibility(note.getSyncState() == FlashNoteDatabase.SYNC_SYNCED ? View.VISIBLE : View.GONE);
-            holder.syncBadge.setTextColor(Color.parseColor(theme.getAccentDarkColor()));
+            holder.syncBadge.setTextColor(Color.parseColor(theme.getSuccessTextColor()));
+            holder.todoBadge.setTextColor(Color.parseColor(theme.getAccentForegroundColor()));
             holder.todoBadge.setVisibility(note.getNoteType() == FlashNote.TYPE_TODO ? View.VISIBLE : View.GONE);
             ReminderRecord localReminder = note.getNoteType() == FlashNote.TYPE_TODO
                     ? database.getReminderForLocalNote(note.getId())
@@ -1999,14 +2051,15 @@ public class MainActivity extends Activity {
                 String remindText = localReminder.getRemindAtText().length() > 0
                         ? localReminder.getRemindAtText()
                         : TodoDateTime.format(localReminder.getRemindAt());
-                holder.reminderBadge.setText("🔔 " + remindText);
+                holder.reminderBadge.setText(getString(R.string.reminder_bell, remindText));
                 holder.reminderBadge.setVisibility(View.VISIBLE);
             } else if (localReminder != null && ReminderRecord.STATUS_OVERDUE.equals(localReminder.getStatus())) {
-                holder.reminderBadge.setText("🔔 已过期");
+                holder.reminderBadge.setText(R.string.reminder_overdue);
                 holder.reminderBadge.setVisibility(View.VISIBLE);
             } else {
                 holder.reminderBadge.setVisibility(View.GONE);
             }
+            holder.reminderBadge.setTextColor(Color.parseColor(theme.getWarningTextColor()));
             if (android.os.Build.VERSION.SDK_INT >= 21) {
                 holder.deleteButton.setBackgroundTintList(null);
                 holder.deleteButton.setStateListAnimator(null);
@@ -2199,14 +2252,14 @@ public class MainActivity extends Activity {
                 if (builder.length() > 0) {
                     builder.append("\n");
                 }
-                builder.append("⚠ ").append(getString(R.string.p1_natural_time_conflict));
+                builder.append("提示：").append(getString(R.string.p1_natural_time_conflict));
             }
             ReminderRecord reminder = database.getReminderByTaskId(item.getTaskId());
             if (builder.length() > 0) {
                 builder.append("\n");
             }
             if (reminder != null && ReminderRecord.STATUS_OVERDUE.equals(reminder.getStatus())) {
-                builder.append("🔔 已过期");
+                builder.append(getString(R.string.reminder_overdue));
             } else if (reminder != null
                     && (ReminderRecord.STATUS_SCHEDULED.equals(reminder.getStatus())
                     || ReminderRecord.STATUS_SNOOZED.equals(reminder.getStatus()))) {
@@ -2216,11 +2269,11 @@ public class MainActivity extends Activity {
                 if (ReminderRecord.STATUS_SNOOZED.equals(reminder.getStatus())) {
                     remindText = "稍后 " + TodoDateTime.format(reminder.getSnoozeUntil());
                 }
-                builder.append("🔔 ").append(remindText);
+                builder.append(getString(R.string.reminder_bell, remindText));
             } else if (item.getRemindAtText().length() > 0) {
-                builder.append("🔔 ").append(item.getRemindAtText());
+                builder.append(getString(R.string.reminder_bell, item.getRemindAtText()));
             } else {
-                builder.append("○ 未设置提醒");
+                builder.append(getString(R.string.reminder_bell_empty));
             }
             return builder.length() == 0 ? "来自 Obsidian 待办同步" : builder.toString();
         }

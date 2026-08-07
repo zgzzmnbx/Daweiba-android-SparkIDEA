@@ -1,10 +1,14 @@
 # CHANGELOG
 
-## 未发布：0.6.0-shadcn-rhea-ui（需求确认于 2026-08-07）
+## 未发布：0.6.0-shadcn-rhea-ui（实现于 2026-08-07）
 
 - 已解码并登记 shadcn preset `b1au7YYAi`：Rhea、Neutral、Blue、Inter、Lucide、默认圆角与 subtle 菜单强调。
 - 已在 PRD 7.6 节定义全量原生 Android 界面重绘、浅色/深色语义令牌、旧主题迁移、无障碍和真机截图验收矩阵。
-- 已生成可直接交给开发 Agent 的 `/goal` 任务书；本条为规划记录，尚未修改业务代码、版本号或 APK。
+- 已落地语义令牌、浅/深资源、跟随系统/浅色/深色偏好和八个旧主题键迁移；设置页改为外观、提醒、飞书、同步与数据、关于分区卡片。
+- 已重绘首页、历史、待办、快速捕捉、记录卡片、编辑/删除/提醒弹窗资源和桌面组件，操作图标统一为 Lucide 线性 VectorDrawable，敏感字段默认遮罩。
+- 新增 `tools/test-ui-redesign.ps1`，令牌、对比度、触控尺寸、敏感字段、XML、View ID 检查通过；故意破坏对比度令牌时 exit=1，还原后 exit=0。
+- 五项既有回归脚本、纯 Java 测试、构建和 v1/v2/v3 签名验证通过；本地包信息为 versionCode 52 / `0.6.0-shadcn-rhea-ui`。
+- vivo V2405A 两次安装均被系统返回 `INSTALL_FAILED_ABORTED: User rejected permissions`，浅/深两套 16 张现场截图未生成，待设备安装授权后补验；未改变数据库、同步、提醒、飞书、Manifest 或包名。
 
 ## 0.52-feishu-card-silent-reminder（2026-08-07）
 

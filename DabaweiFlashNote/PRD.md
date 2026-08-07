@@ -355,7 +355,7 @@ C:\OBS\Damon\.obsidian\plugins\dabawei-todo-sync
 
 ### 7.1 浅色 / 深色主题
 
-状态：纳入 v0.6.0，详细规格见 7.6 节。
+状态：已在 v0.6.0 实现，详细规格见 7.6 节。
 优先级：P0。
 
 - 只保留浅色、深色两套视觉主题。
@@ -365,7 +365,7 @@ C:\OBS\Damon\.obsidian\plugins\dabawei-todo-sync
 
 ### 7.2 Rhea 风格设置页
 
-状态：纳入 v0.6.0，详细规格见 7.6 节。
+状态：已在 v0.6.0 实现，详细规格见 7.6 节。
 优先级：P0。
 
 - 设置页改为紧凑的分区卡片 / 分组列表，而不是一列无层级工程表单。
@@ -778,7 +778,7 @@ P2，远期增强：
 
 ### 7.6 基于 shadcn Rhea 的全量界面重绘
 
-状态：需求已确认，待开发。
+状态：实现完成，待 vivo 真机安装授权后补做双主题现场截图。
 优先级：P0。
 目标版本：`versionCode=52`，`versionName=0.6.0-shadcn-rhea-ui`。
 
@@ -798,16 +798,16 @@ P2，远期增强：
 | `background` | `#FFFFFF` | `#0A0A0A` | 页面与系统栏 |
 | `surface` / `card` | `#FFFFFF` | `#171717` | 卡片、弹窗、输入面 |
 | `foreground` | `#171717` | `#FAFAFA` | 主文字 |
-| `muted` | `#F5F5F5` | `#262626` | 次级面、选中底色 |
-| `mutedForeground` | `#737373` | `#A3A3A3` | 辅助文字 |
-| `border` / `input` | `#E5E5E5` | `#404040` | 1dp 边框、分隔线 |
+| `secondary` | `#F8FAFC` | `#262626` | 次级面、选中底色 |
+| `muted_foreground` | `#64748B` | `#A3A3A3` | 辅助文字 |
+| `border` / `input` | `#E2E8F0` / `#FFFFFF` | `#404040` / `#262626` | 1dp 边框、输入面 |
 | `primary` | `#2563EB` | `#60A5FA` | 主操作、焦点、选中项 |
-| `primaryForeground` | `#FFFFFF` | `#0A0A0A` | 主操作前景 |
+| `primary_foreground` | `#FFFFFF` | `#172554` | 主操作前景 |
 | `accent` | `#EFF6FF` | `#172554` | subtle 菜单/导航强调 |
-| `accentForeground` | `#1E3A8A` | `#DBEAFE` | 强调面前景 |
-| `destructive` | `#DC2626` | `#F87171` | 删除、失败、逾期 |
-| `success` | `#15803D` | `#4ADE80` | 已同步、成功 |
-| `warning` | `#B45309` | `#FBBF24` | 待处理、提醒风险 |
+| `accent_foreground` | `#1E3A8A` | `#DBEAFE` | 强调面前景 |
+| `destructive` / `destructive_foreground` | `#DC2626` / `#FFFFFF` | `#F87171` / `#450A0A` | 删除、失败、逾期 |
+| `success` / `success_foreground` | `#15803D` / `#FFFFFF` | `#4ADE80` / `#052E16` | 已同步、成功 |
+| `warning` / `warning_foreground` | `#B45309` / `#FFFFFF` | `#FBBF24` / `#422006` | 待处理、提醒风险 |
 
 上述主文字、次文字、主按钮和破坏性按钮组合按 WCAG 算法实测均达到普通文字 `4.5:1`；新增色值必须补自动化对比度测试。
 
@@ -855,15 +855,17 @@ P2，远期增强：
 - 旧主题键按 7.1 映射，只迁移主题偏好；SharedPreferences 其他键、SQLite、提醒 occurrence、webhook 和 WebDAV 密钥原样保留。
 - 开发前以当前 `origin/master` 创建可回退 Git 检查点；不得提交完整 webhook、测试截图中的敏感信息、APK 或历史构建垃圾。
 - 实现完成后同步版本号、核心代码备份、README、PRD 与 CHANGELOG，再构建、签名、安装真机；不得把“编译通过”写成“视觉验收完成”。
+- 本轮已落地 `values/colors.xml` + `values-night/colors.xml` 语义令牌、`ThemePalette` 的 `system/light/dark` 解析和八个旧主题键迁移；未改 Manifest、数据库、同步、提醒、飞书或包名。
+- 新增 `tools/test-ui-redesign.ps1` 覆盖令牌、对比度、迁移、48dp、遮罩、XML 和主要 View ID；故障注入与恢复结果记录在 `PROGRESS.md`。
 
 #### 7.6.8 验收标准
 
-- 现有 5 个布局、3 个 Activity、4 个底部导航入口、桌面组件及所有业务弹窗均完成同一 Rhea/Neutral/Blue 视觉语言；不存在仍使用旧纸张/Apple/Obsidian样式的孤岛。
+- 现有 5 个布局、3 个 Activity、4 个底部导航入口、桌面组件及业务弹窗已完成同一 Rhea/Neutral/Blue 资源与组件语言；纯资源/Java/签名验证通过。
 - 浅色、深色两套视觉主题完整；跟随系统、手动浅色、手动深色可切换和持久化，8 个旧主题键迁移正确。
 - 新增自动化检查覆盖：语义令牌完整性、色彩对比度、旧主题迁移、48dp 触控目标、敏感字段遮罩、XML 可解析和主要 View ID/业务入口未丢失。
 - 现有 `test-hello.ps1`、`test-markdown-exporter.ps1`、`test-reminder-p0.ps1`、`test-reminder-p1.ps1`、`test-feishu.ps1` 全部通过，测试不得跳过或放宽业务断言。
 - `build-apk.ps1` 构建和签名通过；真机包信息为 52 / `0.6.0-shadcn-rhea-ui`。
-- 真机在浅/深两套主题下分别留存：首页、历史、待办、设置顶部与底部、快速捕捉、代表性弹窗、桌面组件共 8 类截图；人工确认无截断、重叠、旧主题残留、低对比度、键盘遮挡和敏感信息泄漏。
+- vivo V2405A 当前在线但安装被系统返回 `INSTALL_FAILED_ABORTED: User rejected permissions`，浅/深两套 8 类真机截图尚未生成；不得以旧截图或静态资源替代现场验收，阻塞证据见根目录 `BLOCKED.md`。
 
 ## 8. 暂不做 / 非目标
 

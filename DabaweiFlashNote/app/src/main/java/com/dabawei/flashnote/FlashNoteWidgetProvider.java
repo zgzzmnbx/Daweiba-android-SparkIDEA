@@ -6,6 +6,8 @@ import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Build;
 import android.widget.RemoteViews;
 
@@ -31,6 +33,24 @@ public final class FlashNoteWidgetProvider extends AppWidgetProvider {
 
     private static RemoteViews buildViews(Context context) {
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.flash_note_widget);
+        SharedPreferences prefs = context.getSharedPreferences("dabawei_flashnote_prefs", Context.MODE_PRIVATE);
+        String stored = prefs.getString("theme_key", "system");
+        String migrated = ThemePalette.migratePreference(stored);
+        if (!migrated.equals(stored)) {
+            prefs.edit().putString("theme_key", migrated).apply();
+        }
+        boolean systemIsDark = (context.getResources().getConfiguration().uiMode
+                & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
+                == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+        ThemePalette theme = ThemePalette.resolve(migrated, systemIsDark);
+        boolean dark = "dark".equals(theme.getKey());
+        views.setInt(R.id.widgetRoot, "setBackgroundResource",
+                dark ? R.drawable.widget_background_dark : R.drawable.widget_background);
+        views.setInt(R.id.widgetAction, "setBackgroundResource",
+                dark ? R.drawable.widget_button_background_dark : R.drawable.widget_button_background);
+        views.setTextColor(R.id.widgetTitle, Color.parseColor(theme.getPrimaryTextColor()));
+        views.setTextColor(R.id.widgetRecent, Color.parseColor(theme.getSecondaryTextColor()));
+        views.setTextColor(R.id.widgetAction, Color.parseColor(theme.getPrimaryButtonTextColor()));
         views.setTextViewText(R.id.widgetRecent, latestNoteText(context));
 
         Intent intent = new Intent(context, QuickCaptureActivity.class);

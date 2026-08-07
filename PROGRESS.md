@@ -1,10 +1,10 @@
-# 自然语言自动提醒开发进度
-
-- 目标：让本地待办和 Obsidian 未完成待办的自然语言时间稳定、可撤销地生成本地提醒。
-- 顺序：任务0复核/备份 → 解析器红绿测试 → 自动对账与数据库 → 全量测试/构建 → 真机/文档交付。
-- 已复核：当前真实基线为 versionCode 49、versionName 0.49-p1-todo-reminders，数据库 v7。
-- 已备份：开发前已生成 0.49 核心代码压缩备份并建立 Git 基线提交 031db7b。
-- 最大风险：相对时间基准若未持久化会在 Obsidian 重复同步时漂移或取消后复活。
-- 当前设备：v0.50 已安装并启动于 vivo V2405/V2405A；自然语言提醒、撤销和重启不复活已现场验证，随后 ADB 断开。
-- 红灯证据：新增“三天后默认08:00”断言在旧解析器上失败；随后已恢复为绿灯。
-- 当前阶段：统一解析器、数据库迁移、自动对账、撤销/冲突反馈均已接入；纯 Java/资源/构建签名和部分真机链路已通过，待补到点通知、多时长、Obsidian 同步及系统状态场景。
+# v0.6.0-shadcn-rhea-ui 执行进度
+- 基线：HEAD=436027b，包含 087402c；vivo V2405A 为 device；原有构建/截图脏文件保留不碰。
+- 回退标签：backup-20260807-before-shadcn-rhea-ui -> 436027b。
+- 目标：versionCode=52、versionName=0.6.0-shadcn-rhea-ui；原生 XML+Java 全界面统一 Rhea/Neutral/Blue。
+- 顺序：设计契约与红灯测试 → 令牌/主题 → 通用资源 → 页面/弹层/组件 → 回归/真机/文档/提交。
+- 任务0/1完成：基线锁定；UI 专项测试旧实现 exit=1，修复后 tokens/contrast/migration/touch/masking/XML/IDs exit=0。
+- 任务2完成：双主题、旧偏好迁移、Lucide 图标、首页/历史/待办/设置/快速捕捉/弹窗/组件已统一重绘。
+- 回归完成：五个既有脚本均 exit=0；故障注入 UI 对比度 exit=1，恢复后 exit=0；git diff --check exit=0。
+- 构建完成：v52/0.6.0-shadcn-rhea-ui，签名 v1/v2/v3 全通过；任务3正在做暂存、提交和推送。
+- 阻塞：两次 adb 安装均为 INSTALL_FAILED_ABORTED/User rejected permissions，真机浅深截图未生成，证据在 BLOCKED.md。

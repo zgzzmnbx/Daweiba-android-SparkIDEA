@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Rhea / Neutral / Blue semantic tokens: dark mode -->
+    <color name="background">#0A0A0A</color>
+    <color name="surface">#171717</color>
+    <color name="card">#171717</color>
+    <color name="foreground">#FAFAFA</color>
+    <color name="muted_foreground">#A3A3A3</color>
+    <color name="border">#404040</color>
+    <color name="input">#262626</color>
+    <color name="primary">#60A5FA</color>
+    <color name="primary_foreground">#172554</color>
+    <color name="accent">#172554</color>
+    <color name="accent_foreground">#DBEAFE</color>
+    <color name="destructive">#F87171</color>
+    <color name="destructive_foreground">#450A0A</color>
+    <color name="success">#4ADE80</color>
+    <color name="success_foreground">#052E16</color>
+    <color name="warning">#FBBF24</color>
+    <color name="warning_foreground">#422006</color>
+    <color name="ring">#60A5FA</color>
+    <color name="secondary">#262626</color>
+    <color name="secondary_foreground">#F8FAFC</color>
+    <color name="widget_surface_dark">#171717</color>
+    <color name="widget_border_dark">#404040</color>
+    <color name="widget_action_dark">#60A5FA</color>
+</resources>
