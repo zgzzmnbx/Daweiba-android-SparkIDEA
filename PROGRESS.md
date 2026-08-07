@@ -4,7 +4,7 @@
 - 目标：versionCode=52、versionName=0.6.0-shadcn-rhea-ui；原生 XML+Java 全界面统一 Rhea/Neutral/Blue。
 - 顺序：设计契约与红灯测试 → 令牌/主题 → 通用资源 → 页面/弹层/组件 → 回归/真机/文档/提交。
 - 任务0/1完成：基线锁定；UI 专项测试旧实现 exit=1，修复后 tokens/contrast/migration/touch/masking/XML/IDs exit=0。
-- 任务2完成：双主题、旧偏好迁移、Lucide 图标、首页/历史/待办/设置/快速捕捉/弹窗/组件已统一重绘。
+- 任务2完成：双主题、旧偏好迁移、原有 14 个图标已按基线恢复；提醒/同步标签和顶部同步按钮已改为浅色语义组合。
 - 回归完成：五个既有脚本均 exit=0；故障注入 UI 对比度 exit=1，恢复后 exit=0；git diff --check exit=0。
 - 构建/交付完成：v52/0.6.0-shadcn-rhea-ui，签名 v1/v2/v3 全通过；56 个白名单文件已提交 02ed227 并推送 origin/master。
-- 阻塞：两次 adb 安装均为 INSTALL_FAILED_ABORTED/User rejected permissions；收尾 adb devices -l 仍为空，真机浅深截图未生成，证据在 BLOCKED.md。
+- 反馈修订后：v52 新包已构建并签名；重新安装前 vivo V2405A 再次掉线，静态验收继续，真机截图待设备恢复。

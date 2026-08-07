@@ -42,15 +42,15 @@ public final class ThemePalette {
     private static final ThemePalette SYSTEM_OPTION = new ThemePalette(
             "system", "跟随系统", "#FFFFFF", "#FFFFFF", "#171717", "#64748B",
             "#2563EB", "#1D4ED8", "#E2E8F0", "#FFFFFF",
-            "#F8FAFC", "#EFF6FF", "#334155", "#1E3A8A", "#2563EB");
+            "#F8FAFC", "#EFF6FF", "#334155", "#1E3A8A", "#EFF6FF");
     private static final ThemePalette LIGHT = new ThemePalette(
             "light", "浅色", "#FFFFFF", "#FFFFFF", "#171717", "#64748B",
             "#2563EB", "#1D4ED8", "#E2E8F0", "#FFFFFF",
-            "#F8FAFC", "#EFF6FF", "#334155", "#1E3A8A", "#2563EB");
+            "#F8FAFC", "#EFF6FF", "#334155", "#1E3A8A", "#EFF6FF");
     private static final ThemePalette DARK = new ThemePalette(
             "dark", "深色", "#0A0A0A", "#171717", "#FAFAFA", "#A3A3A3",
             "#60A5FA", "#2563EB", "#404040", "#262626",
-            "#262626", "#172554", "#F8FAFC", "#DBEAFE", "#60A5FA");
+            "#262626", "#172554", "#F8FAFC", "#DBEAFE", "#172554");
 
     private static final ThemePalette[] LEGACY_THEMES = new ThemePalette[]{
             PAPER, INK, FOREST, APPLE, LINEAR, NOTION, RAYCAST, OBSIDIAN};
@@ -255,18 +255,18 @@ public final class ThemePalette {
     }
 
     public String getSuccessColor() {
-        return "dark".equals(key) ? "#4ADE80" : "#15803D";
+        return "dark".equals(key) ? "#14532D" : "#DCFCE7";
     }
 
     public String getSuccessTextColor() {
-        return "dark".equals(key) ? "#052E16" : "#FFFFFF";
+        return "dark".equals(key) ? "#BBF7D0" : "#166534";
     }
 
     public String getWarningColor() {
-        return "dark".equals(key) ? "#FBBF24" : "#B45309";
+        return "dark".equals(key) ? "#1E3A8A" : "#DBEAFE";
     }
 
     public String getWarningTextColor() {
-        return "dark".equals(key) ? "#422006" : "#FFFFFF";
+        return "dark".equals(key) ? "#DBEAFE" : "#1E40AF";
     }
 }

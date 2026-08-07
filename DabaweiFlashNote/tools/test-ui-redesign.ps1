@@ -140,6 +140,26 @@ foreach ($secretId in @("webdavPassword", "feishuWebhookUrl")) {
   }
 }
 
+$legacyIconFiles = @(
+  "ic_action_save.xml", "ic_action_todo.xml", "ic_input_clipboard.xml", "ic_input_image.xml",
+  "ic_nav_history.xml", "ic_nav_home.xml", "ic_nav_mine.xml", "ic_nav_settings.xml",
+  "ic_nav_stats.xml", "ic_nav_tags.xml", "ic_status_synced.xml", "ic_timeline_delete.xml",
+  "ic_top_sync.xml", "ic_trash.xml"
+)
+$repoRoot = Split-Path -Parent $projectRoot
+$legacyIconPaths = $legacyIconFiles | ForEach-Object { "DabaweiFlashNote/app/src/main/res/drawable/$_" }
+$legacyIconMismatches = New-Object System.Collections.Generic.List[string]
+foreach ($legacyIconPath in $legacyIconPaths) {
+  $baselineBlob = (& git -C $repoRoot rev-parse "436027b:$legacyIconPath").Trim()
+  $currentBlob = (& git -C $repoRoot hash-object -- $legacyIconPath).Trim()
+  if ($baselineBlob -ne $currentBlob) {
+    $legacyIconMismatches.Add($legacyIconPath)
+  }
+}
+if ($legacyIconMismatches.Count -gt 0) {
+  Fail "legacy icon assets diverged from the pre-redesign baseline: $($legacyIconMismatches -join ', ')"
+}
+
 $uiFiles = @(
   (Join-Path $resRoot "layout"), (Join-Path $resRoot "drawable"),
   (Join-Path $javaRoot "MainActivity.java"), (Join-Path $javaRoot "SyncSettingsActivity.java"),
@@ -149,7 +169,9 @@ foreach ($path in $uiFiles) {
   $items = if (Test-Path -LiteralPath $path -PathType Container) { Get-ChildItem -LiteralPath $path -Filter "*.xml" } else { Get-Item -LiteralPath $path }
   foreach ($item in $items) {
     $raw = Get-Content -LiteralPath $item.FullName -Raw -Encoding UTF8
-    if ($raw -match '#[0-9A-Fa-f]{6}') { Fail "raw UI color outside semantic token files: $($item.FullName)" }
+    if ($raw -match '#[0-9A-Fa-f]{6}' -and $legacyIconFiles -notcontains $item.Name) {
+      Fail "raw UI color outside semantic token files: $($item.FullName)"
+    }
   }
 }
 

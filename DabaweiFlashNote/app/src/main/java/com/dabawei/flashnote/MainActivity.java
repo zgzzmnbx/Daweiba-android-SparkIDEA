@@ -1123,7 +1123,8 @@ public class MainActivity extends Activity {
         int todoAction = Color.parseColor(theme.getTodoButtonColor());
         int saveActionText = Color.parseColor(theme.getSaveButtonTextColor());
         int todoActionText = Color.parseColor(theme.getTodoButtonTextColor());
-        int primaryButtonText = Color.parseColor(theme.getPrimaryButtonTextColor());
+        int syncButton = Color.parseColor(theme.getSyncButtonColor());
+        int syncButtonText = Color.parseColor(theme.getTodoButtonTextColor());
 
         applyPageVisibility();
         pullRoot.setBackgroundColor(screen);
@@ -1140,7 +1141,7 @@ public class MainActivity extends Activity {
         stylePanel(noteInputPanel, input, border, 12);
         styleButton(saveButton, saveAction, saveActionText, border, 10);
         styleButton(saveTodoButton, todoAction, todoActionText, border, 10);
-        styleButton(recordButton, accentDark, primaryButtonText, Color.TRANSPARENT, 10);
+        styleButton(recordButton, syncButton, syncButtonText, border, 10);
         styleBottomNav(bottomNav, surface, border);
         styleNavItem(navHome, navHomeIcon, navHomeLabel, currentPage == PAGE_HOME ? accentDark : secondary, currentPage == PAGE_HOME);
         styleNavItem(navTags, navTagsIcon, navTagsLabel, currentPage == PAGE_HISTORY ? accentDark : secondary, currentPage == PAGE_HISTORY);
@@ -1163,7 +1164,7 @@ public class MainActivity extends Activity {
         noteInput.setHintTextColor(withAlpha(secondary, 82));
         saveButton.setText(getString(R.string.save_note));
         saveTodoButton.setText(getString(R.string.save_todo));
-        setStartIcon(recordButton, R.drawable.ic_top_sync, primaryButtonText, 18);
+        setStartIcon(recordButton, R.drawable.ic_top_sync, syncButtonText, 18);
         setStartIcon(saveButton, R.drawable.ic_action_save, saveActionText, 18);
         setStartIcon(saveTodoButton, R.drawable.ic_action_todo, todoActionText, 18);
         setStartIcon(syncStatus, R.drawable.ic_status_synced, accent, 15);
@@ -2032,7 +2033,7 @@ public class MainActivity extends Activity {
             holder.syncBadge.setBackground(makeRoundedBackground(
                     Color.parseColor(theme.getSuccessColor()), Color.TRANSPARENT, 999));
             holder.todoBadge.setBackground(makeRoundedBackground(
-                    Color.parseColor(theme.getAccentColor()), Color.TRANSPARENT, 999));
+                    Color.parseColor(theme.getTodoButtonColor()), Color.TRANSPARENT, 999));
             holder.reminderBadge.setBackground(makeRoundedBackground(
                     Color.parseColor(theme.getWarningColor()), Color.TRANSPARENT, 999));
             setElevationDp(holder.noteCard, 0);
@@ -2040,7 +2041,7 @@ public class MainActivity extends Activity {
             holder.time.setText(dateTimeFormat.format(new Date(note.getCreatedAtMillis())));
             holder.syncBadge.setVisibility(note.getSyncState() == FlashNoteDatabase.SYNC_SYNCED ? View.VISIBLE : View.GONE);
             holder.syncBadge.setTextColor(Color.parseColor(theme.getSuccessTextColor()));
-            holder.todoBadge.setTextColor(Color.parseColor(theme.getAccentForegroundColor()));
+            holder.todoBadge.setTextColor(Color.parseColor(theme.getTodoButtonTextColor()));
             holder.todoBadge.setVisibility(note.getNoteType() == FlashNote.TYPE_TODO ? View.VISIBLE : View.GONE);
             ReminderRecord localReminder = note.getNoteType() == FlashNote.TYPE_TODO
                     ? database.getReminderForLocalNote(note.getId())

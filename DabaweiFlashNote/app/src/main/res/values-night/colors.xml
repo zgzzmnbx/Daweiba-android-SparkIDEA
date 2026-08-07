@@ -14,10 +14,10 @@
     <color name="accent_foreground">#DBEAFE</color>
     <color name="destructive">#F87171</color>
     <color name="destructive_foreground">#450A0A</color>
-    <color name="success">#4ADE80</color>
-    <color name="success_foreground">#052E16</color>
-    <color name="warning">#FBBF24</color>
-    <color name="warning_foreground">#422006</color>
+    <color name="success">#14532D</color>
+    <color name="success_foreground">#BBF7D0</color>
+    <color name="warning">#1E3A8A</color>
+    <color name="warning_foreground">#DBEAFE</color>
     <color name="ring">#60A5FA</color>
     <color name="secondary">#262626</color>
     <color name="secondary_foreground">#F8FAFC</color>
