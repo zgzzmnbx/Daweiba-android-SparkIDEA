@@ -12,3 +12,4 @@
 - 2026-08-07 布局/苹方修订后再次安装：ADB 仍显示 vivo V2405A 为 `device`，但系统 `mInputRestricted=true`、屏幕处于锁屏；安装返回 `INSTALL_FAILED_ABORTED: User rejected permissions`。未绕过锁屏或修改权限，待设备解锁后继续安装与真机复验。
 - 2026-08-07 设备解锁后已成功安装修订包并完成浅色首页、历史、待办、设置顶部/底部 5 张截图；从桌面继续组件/快速捕捉采集时 USB ADB 再次断开，连续两轮 30 秒重连均无设备，未生成或伪造剩余截图。
 - 苹方字体文件来自用户指定的本地字体包，随 APK 打包的再分发授权未在当前工作区确认；代码按用户要求接入，正式对外分发前需确认字体授权。
+- 2026-08-07 逾期标签短文案修订包已构建并核验 v52；设备虽在线为 `device`，但 `adb install -r`、`adb install --no-incremental -r` 和 `adb shell pm install -r -g` 三次均返回 `INSTALL_FAILED_ABORTED: User rejected permissions`，因此本轮短文案未完成现场截图核验，未改动应用数据。
