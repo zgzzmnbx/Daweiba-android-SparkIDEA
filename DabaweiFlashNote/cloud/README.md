@@ -6,4 +6,6 @@
 
 接口：`GET /healthz` 为无认证健康检查；`POST /v1/reminders/reconcile` 使用 `Authorization: Bearer <token>`，接收 `device_id`、完整 `observed_task_ids` 和 `active_reminders`。相同 `(device_id, task_id)` 快照幂等，完成、删除或取消提醒会从 active 列表移除并取消云端发送。
 
+飞书明确返回成功后，`mark_sent()` 必须提交 SQLite 事务并持久化为 `sent`；明确失败时，`mark_failed()` 同样必须提交退避状态。只有请求结果不确定的记录才保持 `sending`，且不会在服务启动或 10 分钟后自动回收。因为飞书 Webhook 没有可查询的幂等凭证，自动重发不确定投递会制造重复卡片；需要重新发送时，应先让手机上报变更后的提醒时间或内容，使云端产生新的发送状态。
+
 日志只记录接口路径、设备 ID、任务 ID、尝试次数和通用错误，不记录 Token、Webhook 或任务正文。

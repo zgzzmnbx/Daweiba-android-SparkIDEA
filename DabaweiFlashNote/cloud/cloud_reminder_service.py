@@ -174,10 +174,6 @@ class ReminderStore:
                     ON reminders(status, next_attempt_at_ms, remind_at_ms);
                 """
             )
-            connection.execute(
-                "UPDATE reminders SET status='scheduled', next_attempt_at_ms=0, "
-                "sending_started_at_ms=0 WHERE status='sending'"
-            )
 
     @contextmanager
     def connect(self) -> Iterator[sqlite3.Connection]:
@@ -280,11 +276,12 @@ class ReminderStore:
         timestamp = now_ms()
         with self.connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
-            connection.execute(
-                "UPDATE reminders SET status='scheduled', sending_started_at_ms=0 "
-                "WHERE status='sending' AND sending_started_at_ms < ?",
-                (timestamp - 10 * 60 * 1000,),
-            )
+            # A webhook request may already have been accepted when the process
+            # exits before mark_sent() runs.  Feishu webhooks do not expose an
+            # idempotency key we can query, so automatically recycling an
+            # in-flight row would turn an uncertain delivery into a duplicate.
+            # Keep it in 'sending' until the next snapshot changes or an
+            # operator explicitly repairs the row.
             row = connection.execute(
                 "SELECT device_id, task_id, task_text, source_path, remind_at_ms, time_zone, attempts "
                 "FROM reminders WHERE status='scheduled' AND next_attempt_at_ms <= ? "
@@ -327,6 +324,7 @@ class ReminderStore:
                     reminder["attempts"],
                 ),
             )
+            connection.commit()
 
     def mark_failed(self, reminder: Dict[str, Any], error: str) -> None:
         timestamp = now_ms()
@@ -353,6 +351,7 @@ class ReminderStore:
                     attempts,
                 ),
             )
+            connection.commit()
 
 
 def validate_snapshot(payload: Any) -> Tuple[str, Set[str], List[Dict[str, Any]]]:
